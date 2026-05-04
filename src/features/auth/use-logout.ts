@@ -1,10 +1,12 @@
 import { useMutation } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { authApi } from './api'
 import { useSession } from '@entities/session'
 import { tokenStorage } from '@shared/lib'
 
 export function useLogout() {
   const signOut = useSession((s) => s.signOut)
+  const navigate = useNavigate()
   return useMutation({
     mutationFn: async () => {
       const refresh = tokenStorage.getRefresh()
@@ -16,6 +18,9 @@ export function useLogout() {
         }
       }
     },
-    onSettled: () => signOut(),
+    onSettled: () => {
+      signOut()
+      navigate({ to: '/login' })
+    },
   })
 }
