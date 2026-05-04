@@ -102,7 +102,7 @@ export function UsersPage() {
       key: "actions",
       header: "",
       align: "right",
-      width: "180px",
+      width: "181px",
       render: (u) => (
         <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
           {u?.role !== "super_admin" && (
