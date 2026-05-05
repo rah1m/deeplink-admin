@@ -18,6 +18,14 @@ export function useLinkPublic(shortCode: string | undefined) {
   })
 }
 
+export function useLinkAdmin(shortCode: string | undefined) {
+  return useQuery({
+    queryKey: shortCode ? linkQueryKeys.admin(shortCode) : ['links', 'admin', 'none'],
+    queryFn: () => linkApi.getAdmin(shortCode!),
+    enabled: !!shortCode,
+  })
+}
+
 export function useLinkStats(shortCode: string | undefined, groupBy?: GroupBy) {
   return useQuery({
     queryKey: shortCode

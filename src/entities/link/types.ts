@@ -1,4 +1,4 @@
-import type { SocialMeta } from "@entities/app";
+import type { App, SocialMeta } from "@entities/app";
 
 export type UtmParams = Partial<
   Record<
@@ -27,9 +27,7 @@ export interface DynamicLink {
   utm_params?: UtmParams;
   payload?: Record<string, unknown>;
   stats?: LinkStats;
-  app?: {
-    name: string;
-  };
+  app?: App;
 }
 
 export interface ListLinksResponse {
@@ -97,6 +95,7 @@ export interface PublicLinkInfo {
   deep_link: string;
   utm_params?: UtmParams;
   payload?: Record<string, unknown>;
+  dynamic_params?: Record<string, string>;
   app?: {
     id: number;
     name: string;

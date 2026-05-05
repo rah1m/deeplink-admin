@@ -13,4 +13,4 @@ export type {
   UtmParams,
 } from './types'
 export { linkApi, linkQueryKeys } from './api'
-export { useLinks, useLinkPublic, useLinkStats } from './queries'
+export { useLinks, useLinkPublic, useLinkAdmin, useLinkStats } from './queries'

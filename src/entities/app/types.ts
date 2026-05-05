@@ -7,6 +7,7 @@ export interface SocialMeta {
 export interface App {
   id: number
   name: string
+  domain?: string
   ios_bundle_id?: string
   ios_team_id?: string
   android_package?: string
@@ -19,6 +20,7 @@ export interface App {
 
 export interface CreateAppInput {
   name: string
+  domain?: string
   ios_bundle_id?: string
   ios_team_id?: string
   android_package?: string

@@ -33,6 +33,12 @@ export function AppsPage() {
       render: (a) => <strong>{a.name}</strong>,
     },
     {
+      key: 'domain',
+      header: 'Domain',
+      render: (a) =>
+        a.domain ? <code>{a.domain}</code> : <span style={{ color: 'var(--color-text-subtle)' }}>—</span>,
+    },
+    {
       key: 'ios',
       header: 'iOS bundle',
       render: (a) =>

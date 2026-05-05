@@ -13,6 +13,7 @@ interface AppFormProps {
 
 export function AppForm({ initial, submitLabel, loading, onSubmit, onCancel }: AppFormProps) {
   const [name, setName] = useState(initial?.name ?? '')
+  const [domain, setDomain] = useState(initial?.domain ?? '')
   const [iosBundle, setIosBundle] = useState(initial?.ios_bundle_id ?? '')
   const [iosTeam, setIosTeam] = useState(initial?.ios_team_id ?? '')
   const [androidPkg, setAndroidPkg] = useState(initial?.android_package ?? '')
@@ -34,6 +35,7 @@ export function AppForm({ initial, submitLabel, loading, onSubmit, onCancel }: A
 
     onSubmit({
       name,
+      domain: domain || undefined,
       ios_bundle_id: iosBundle || undefined,
       ios_team_id: iosTeam || undefined,
       android_package: androidPkg || undefined,
@@ -51,6 +53,13 @@ export function AppForm({ initial, submitLabel, loading, onSubmit, onCancel }: A
         required
         value={name}
         onChange={(e) => setName(e.target.value)}
+      />
+      <Input
+        label="Domain"
+        placeholder="link.example.com"
+        value={domain}
+        onChange={(e) => setDomain(e.target.value)}
+        hint="Per-app subdomain that serves AASA / assetlinks. Required for multi-app setups to avoid Universal Link claim collisions."
       />
 
       <div className="app-form__section">iOS</div>

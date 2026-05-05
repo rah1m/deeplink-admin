@@ -10,3 +10,13 @@ export function useUpdateLink(shortCode: string) {
     },
   })
 }
+
+export function useDeleteLink(shortCode: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => linkApi.remove(shortCode),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: linkQueryKeys.all() })
+    },
+  })
+}

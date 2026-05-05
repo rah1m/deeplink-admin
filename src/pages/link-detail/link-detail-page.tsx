@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Link, useParams } from '@tanstack/react-router'
+import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import {
   Badge,
   Button,
   Card,
   CenteredSpinner,
+  ConfirmDialog,
   Modal,
   PageHeader,
   Select,
@@ -12,29 +13,32 @@ import {
   useToast,
 } from '@shared/ui'
 import { LinkForm } from '@features/link-create'
-import { useUpdateLink } from '@features/link-edit'
+import { useDeleteLink, useUpdateLink } from '@features/link-edit'
 import { useCloneLink } from '@features/link-clone'
 import {
   linkApi,
-  useLinkPublic,
+  useLinkAdmin,
   useLinkStats,
   type GroupBy,
 } from '@entities/link'
-import { copyToClipboard, formatNumber } from '@shared/lib'
+import { copyToClipboard, formatDate, formatNumber } from '@shared/lib'
 import { extractError } from '@shared/api'
 import './link-detail.css'
 
 export function LinkDetailPage() {
   const { shortCode } = useParams({ strict: false }) as { shortCode: string }
+  const navigate = useNavigate()
   const toast = useToast()
 
-  const link = useLinkPublic(shortCode)
+  const link = useLinkAdmin(shortCode)
   const [groupBy, setGroupBy] = useState<GroupBy | ''>('')
   const stats = useLinkStats(shortCode, groupBy || undefined)
 
   const update = useUpdateLink(shortCode)
   const clone = useCloneLink(shortCode)
+  const remove = useDeleteLink(shortCode)
   const [editOpen, setEditOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (link.isLoading) return <CenteredSpinner />
   if (link.isError || !link.data) {
@@ -44,6 +48,8 @@ export function LinkDetailPage() {
   const data = link.data
   const shortUrl = linkApi.shortUrl(shortCode)
   const qrUrl = linkApi.qrUrl(shortCode, 320)
+
+  const expired = data.expires_at != null && new Date(data.expires_at) < new Date()
 
   const onCopy = async () => {
     await copyToClipboard(shortUrl)
@@ -73,6 +79,25 @@ export function LinkDetailPage() {
     )
   }
 
+  const onConfirmDelete = () => {
+    remove.mutate(undefined, {
+      onSuccess: () => {
+        toast.success('Link deleted')
+        setDeleteOpen(false)
+        navigate({ to: '/links' })
+      },
+      onError: (err) => toast.error(extractError(err)),
+    })
+  }
+
+  const statusBadge = !data.is_active ? (
+    <Badge tone="neutral">Inactive</Badge>
+  ) : expired ? (
+    <Badge tone="warning">Expired</Badge>
+  ) : (
+    <Badge tone="success">Live</Badge>
+  )
+
   return (
     <>
       <PageHeader
@@ -93,6 +118,9 @@ export function LinkDetailPage() {
               Clone
             </Button>
             <Button onClick={() => setEditOpen(true)}>Edit</Button>
+            <Button variant="danger" onClick={() => setDeleteOpen(true)}>
+              Delete
+            </Button>
           </>
         }
       />
@@ -128,6 +156,17 @@ export function LinkDetailPage() {
                 <code>{data.deep_link}</code>
               </dd>
 
+              {data.fallback_url && (
+                <>
+                  <dt>Fallback URL</dt>
+                  <dd>
+                    <a href={data.fallback_url} target="_blank" rel="noreferrer">
+                      {data.fallback_url}
+                    </a>
+                  </dd>
+                </>
+              )}
+
               {data.app && (
                 <>
                   <dt>App</dt>
@@ -140,6 +179,24 @@ export function LinkDetailPage() {
                 </>
               )}
 
+              <dt>Created</dt>
+              <dd>
+                <span style={{ color: 'var(--color-text-muted)' }}>
+                  {formatDate(data.created_at)}
+                </span>
+              </dd>
+
+              <dt>Expires</dt>
+              <dd>
+                {data.expires_at ? (
+                  <span style={{ color: 'var(--color-text-muted)' }}>
+                    {formatDate(data.expires_at)}
+                  </span>
+                ) : (
+                  <span className="lkd__sub">Never</span>
+                )}
+              </dd>
+
               {data.utm_params && Object.keys(data.utm_params).length > 0 && (
                 <>
                   <dt>UTM</dt>
@@ -151,6 +208,17 @@ export function LinkDetailPage() {
                         </Badge>
                       ))}
                     </div>
+                  </dd>
+                </>
+              )}
+
+              {data.social_meta && Object.keys(data.social_meta).length > 0 && (
+                <>
+                  <dt>Social meta</dt>
+                  <dd>
+                    <pre className="lkd__pre">
+                      {JSON.stringify(data.social_meta, null, 2)}
+                    </pre>
                   </dd>
                 </>
               )}
@@ -222,18 +290,19 @@ export function LinkDetailPage() {
         <div className="lkd__col">
           <Card title="Status" padding="md">
             <div className="lkd__status">
-              <Badge tone="success">Live</Badge>
+              {statusBadge}
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => toggleActive(false)}
+                onClick={() => toggleActive(!data.is_active)}
                 loading={update.isPending}
               >
-                Deactivate
+                {data.is_active ? 'Deactivate' : 'Activate'}
               </Button>
             </div>
             <p className="lkd__hint">
-              Deactivating returns 404 from the public redirect endpoint.
+              Deactivating returns 404 from the public redirect endpoint. Use Delete
+              for permanent removal — historical events are preserved.
             </p>
           </Card>
 
@@ -263,8 +332,11 @@ export function LinkDetailPage() {
           lockShortCode
           initial={{
             short_code: data.short_code,
-            app_id: data.app?.id,
+            app_id: data.app?.id ?? data.app_id ?? undefined,
             deep_link: data.deep_link,
+            fallback_url: data.fallback_url,
+            expires_at: data.expires_at,
+            social_meta: data.social_meta,
             utm_params: data.utm_params,
             payload: data.payload,
           }}
@@ -293,6 +365,17 @@ export function LinkDetailPage() {
           }
         />
       </Modal>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title={`Delete ${shortCode}?`}
+        description="The link will become invisible to all reads (resolve, list, clone, match). Historical events are preserved for analytics. This cannot be undone from the admin panel."
+        confirmText="Delete link"
+        destructive
+        loading={remove.isPending}
+        onCancel={() => setDeleteOpen(false)}
+        onConfirm={onConfirmDelete}
+      />
     </>
   )
 }
