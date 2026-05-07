@@ -16,6 +16,7 @@ const NAV: NavItem[] = [
   { to: '/apps', label: 'Apps', icon: '⬚' },
   { to: '/events', label: 'Events', icon: '◊' },
   { to: '/users', label: 'Users', icon: '⌘', superAdminOnly: true },
+  { to: '/audit', label: 'Audit Log', icon: '✎', superAdminOnly: true },
 ]
 
 export function Sidebar() {

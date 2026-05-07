@@ -18,6 +18,7 @@ import { LinkDetailPage } from '@pages/link-detail/link-detail-page'
 import { AppsPage } from '@pages/apps/apps-page'
 import { UsersPage } from '@pages/users/users-page'
 import { EventsPage } from '@pages/events/events-page'
+import { AuditPage } from '@pages/audit/audit-page'
 import { NotFoundPage } from '@pages/not-found/not-found-page'
 
 const rootRoute = new RootRoute({
@@ -100,6 +101,18 @@ const usersRoute = new Route({
   },
 })
 
+const auditRoute = new Route({
+  getParentRoute: () => protectedRoute,
+  path: '/audit',
+  component: AuditPage,
+  beforeLoad: () => {
+    const user = useSession.getState().user
+    if (!user || user.role !== 'super_admin') {
+      throw redirect({ to: '/' })
+    }
+  },
+})
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   setupRoute,
@@ -110,6 +123,7 @@ const routeTree = rootRoute.addChildren([
     appsRoute,
     eventsRoute,
     usersRoute,
+    auditRoute,
   ]),
 ])
 
