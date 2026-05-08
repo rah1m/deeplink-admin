@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Badge,
   Button,
   Card,
   DataTable,
+  Input,
   Modal,
   PageHeader,
   Pagination,
@@ -25,13 +26,24 @@ export function LinksPage() {
   const toast = useToast();
   const apps = useApps();
   const [appId, setAppId] = useState<string>("");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [offset, setOffset] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
+
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setDebouncedSearch(search.trim().slice(0, 100));
+      setOffset(0);
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [search]);
 
   const params = {
     limit: PAGE_SIZE,
     offset,
     app_id: appId ? Number(appId) : undefined,
+    q: debouncedSearch || undefined,
   };
   const links = useLinks(params);
   const create = useCreateLink();
@@ -48,6 +60,17 @@ export function LinksPage() {
       width: "140px",
       align: "left",
       render: (l) => l.app?.name,
+    },
+    {
+      key: "name",
+      header: "Name",
+      width: "200px",
+      render: (l) =>
+        l.name ? (
+          <span className="ellipsis">{l.name}</span>
+        ) : (
+          <span style={{ color: "var(--color-text-muted)" }}>—</span>
+        ),
     },
     {
       key: "short",
@@ -149,6 +172,15 @@ export function LinksPage() {
                 </option>
               ))}
             </Select>
+          </div>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <Input
+              label="Search"
+              placeholder="Search name, short code or deep link"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              maxLength={100}
+            />
           </div>
         </div>
       </Card>

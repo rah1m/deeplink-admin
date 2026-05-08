@@ -1,5 +1,6 @@
 export type {
   DynamicLink,
+  LinkAuthor,
   LinkStats,
   ListLinksParams,
   ListLinksResponse,

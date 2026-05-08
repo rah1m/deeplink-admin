@@ -26,6 +26,7 @@ export function LinkForm({
 
   const [shortCode, setShortCode] = useState(initial?.short_code ?? '')
   const [appId, setAppId] = useState<string>(initial?.app_id?.toString() ?? '')
+  const [name, setName] = useState(initial?.name ?? '')
   const [deepLink, setDeepLink] = useState(initial?.deep_link ?? '')
   const [fallbackUrl, setFallbackUrl] = useState(initial?.fallback_url ?? '')
   const [expiresAt, setExpiresAt] = useState(initial?.expires_at ?? '')
@@ -76,6 +77,7 @@ export function LinkForm({
     onSubmit({
       short_code: shortCode || undefined,
       app_id: appId ? Number(appId) : undefined,
+      name: name || undefined,
       deep_link: deepLink,
       fallback_url: fallbackUrl,
       expires_at: expiresAt || undefined,
@@ -111,6 +113,14 @@ export function LinkForm({
         </Select>
       </div>
 
+      <Input
+        label="Name"
+        placeholder="Yay-26 SMS — Bakcell"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        maxLength={120}
+        hint="Internal admin label shown to your team. Not the public OG title."
+      />
       <Input
         label="Deep link *"
         required

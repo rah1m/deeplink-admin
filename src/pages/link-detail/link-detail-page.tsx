@@ -109,6 +109,7 @@ export function LinkDetailPage() {
             <code>{shortCode}</code>
           </span>
         }
+        description={data.name ?? undefined}
         actions={
           <>
             <Button variant="secondary" onClick={onCopy}>
@@ -144,6 +145,13 @@ export function LinkDetailPage() {
 
           <Card title="Details" padding="md">
             <dl className="lkd__dl">
+              {data.name && (
+                <>
+                  <dt>Name</dt>
+                  <dd>{data.name}</dd>
+                </>
+              )}
+
               <dt>Short URL</dt>
               <dd>
                 <a href={shortUrl} target="_blank" rel="noreferrer">
@@ -184,6 +192,14 @@ export function LinkDetailPage() {
                 <span style={{ color: 'var(--color-text-muted)' }}>
                   {formatDate(data.created_at)}
                 </span>
+                {data.created_by && (
+                  <>
+                    {' '}
+                    <span className="lkd__sub">
+                      by {data.created_by.username}
+                    </span>
+                  </>
+                )}
               </dd>
 
               <dt>Expires</dt>
@@ -333,6 +349,7 @@ export function LinkDetailPage() {
           initial={{
             short_code: data.short_code,
             app_id: data.app?.id ?? data.app_id ?? undefined,
+            name: data.name ?? '',
             deep_link: data.deep_link,
             fallback_url: data.fallback_url,
             expires_at: data.expires_at,
@@ -346,6 +363,7 @@ export function LinkDetailPage() {
           onSubmit={(input) =>
             update.mutate(
               {
+                name: input.name ?? '',
                 deep_link: input.deep_link,
                 fallback_url: input.fallback_url,
                 expires_at: input.expires_at,

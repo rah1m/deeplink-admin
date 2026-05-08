@@ -14,15 +14,22 @@ export interface LinkStats {
   conversions: number;
 }
 
+export interface LinkAuthor {
+  id: number;
+  username: string;
+}
+
 export interface DynamicLink {
   id: number;
   short_code: string;
+  name?: string | null;
   app_id?: number | null;
   deep_link: string;
   fallback_url?: string;
   is_active: boolean;
   expires_at: string | null;
   created_at: string;
+  created_by?: LinkAuthor;
   social_meta?: SocialMeta;
   utm_params?: UtmParams;
   payload?: Record<string, unknown>;
@@ -39,6 +46,7 @@ export interface ListLinksResponse {
 
 export interface ListLinksParams {
   app_id?: number;
+  q?: string;
   limit?: number;
   offset?: number;
 }
@@ -46,6 +54,7 @@ export interface ListLinksParams {
 export interface CreateLinkInput {
   short_code?: string;
   app_id?: number;
+  name?: string;
   deep_link: string;
   fallback_url: string;
   expires_at?: string | null;
@@ -55,6 +64,7 @@ export interface CreateLinkInput {
 }
 
 export interface UpdateLinkInput {
+  name?: string;
   deep_link?: string;
   fallback_url?: string;
   expires_at?: string | null;
