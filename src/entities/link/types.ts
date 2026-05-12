@@ -113,3 +113,49 @@ export interface PublicLinkInfo {
     android_package?: string;
   };
 }
+
+export type TimeseriesBucketSize = "hour" | "day" | "week";
+
+export interface TimeseriesBucket {
+  ts: string;
+  clicks: number;
+  installs: number;
+  opens: number;
+  conversions: number;
+  revenue: number;
+}
+
+export interface TimeseriesResponse {
+  bucket: TimeseriesBucketSize;
+  days: number;
+  from: string;
+  to: string;
+  timezone: string;
+  series: TimeseriesBucket[];
+}
+
+export interface TimeseriesParams {
+  bucket?: TimeseriesBucketSize;
+  days?: number;
+  tz?: string;
+}
+
+export interface RevenueBySource {
+  source: string;
+  revenue: number;
+  conversions: number;
+  aov: number;
+}
+
+export interface RevenueBreakdown {
+  currency: string;
+  total_revenue: number;
+  conversion_count: number;
+  avg_order_value: number;
+  by_source: RevenueBySource[];
+}
+
+export interface RevenueParams {
+  currency?: string;
+  days?: number;
+}

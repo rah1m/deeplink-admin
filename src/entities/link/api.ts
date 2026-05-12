@@ -10,6 +10,10 @@ import type {
   ListLinksParams,
   ListLinksResponse,
   PublicLinkInfo,
+  RevenueBreakdown,
+  RevenueParams,
+  TimeseriesParams,
+  TimeseriesResponse,
   UpdateLinkInput,
 } from './types'
 
@@ -38,6 +42,14 @@ export const linkApi = {
         params: groupBy ? { group_by: groupBy } : undefined,
       })
       .then((r) => r.data),
+  timeseries: (shortCode: string, params: TimeseriesParams = {}) =>
+    http
+      .get<TimeseriesResponse>(`/v1/links/${shortCode}/timeseries`, { params })
+      .then((r) => r.data),
+  revenue: (shortCode: string, params: RevenueParams = {}) =>
+    http
+      .get<RevenueBreakdown>(`/v1/links/${shortCode}/revenue`, { params })
+      .then((r) => r.data),
   qrUrl: (shortCode: string, size = 256) =>
     `${env.apiBaseUrl}/v1/links/${shortCode}/qr?size=${size}`,
   shortUrl: (shortCode: string) => `${env.apiBaseUrl}/${shortCode}`,
@@ -50,4 +62,8 @@ export const linkQueryKeys = {
   admin: (shortCode: string) => ['links', 'admin', shortCode] as const,
   stats: (shortCode: string, groupBy?: GroupBy) =>
     ['links', 'stats', shortCode, groupBy ?? 'all'] as const,
+  timeseries: (shortCode: string, params: TimeseriesParams) =>
+    ['links', 'timeseries', shortCode, params] as const,
+  revenue: (shortCode: string, params: RevenueParams) =>
+    ['links', 'revenue', shortCode, params] as const,
 }

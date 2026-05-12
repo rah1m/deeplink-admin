@@ -6,6 +6,7 @@ import {
   Card,
   CenteredSpinner,
   ConfirmDialog,
+  Input,
   Modal,
   PageHeader,
   Select,
@@ -18,12 +19,28 @@ import { useCloneLink } from '@features/link-clone'
 import {
   linkApi,
   useLinkAdmin,
+  useLinkRevenue,
   useLinkStats,
+  useLinkTimeseries,
   type GroupBy,
+  type TimeseriesBucketSize,
 } from '@entities/link'
 import { copyToClipboard, formatDate, formatNumber } from '@shared/lib'
 import { extractError } from '@shared/api'
+import { TimeseriesChart } from '@pages/analytics/charts'
 import './link-detail.css'
+
+function formatRevenue(value: number, currency: string) {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 2,
+    }).format(value)
+  } catch {
+    return `${formatNumber(Math.round(value))} ${currency}`
+  }
+}
 
 export function LinkDetailPage() {
   const { shortCode } = useParams({ strict: false }) as { shortCode: string }
@@ -33,6 +50,11 @@ export function LinkDetailPage() {
   const link = useLinkAdmin(shortCode)
   const [groupBy, setGroupBy] = useState<GroupBy | ''>('')
   const stats = useLinkStats(shortCode, groupBy || undefined)
+  const [bucket, setBucket] = useState<TimeseriesBucketSize>('day')
+  const [days, setDays] = useState<number>(30)
+  const [currency, setCurrency] = useState<string>('AZN')
+  const timeseries = useLinkTimeseries(shortCode, { bucket, days })
+  const revenue = useLinkRevenue(shortCode, { currency, days: 90 })
 
   const update = useUpdateLink(shortCode)
   const clone = useCloneLink(shortCode)
@@ -250,6 +272,123 @@ export function LinkDetailPage() {
                 </>
               )}
             </dl>
+          </Card>
+
+          <Card
+            title="Trend"
+            description="Bucketed clicks / installs / conversions with revenue overlay."
+            padding="none"
+            actions={
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Select
+                  value={bucket}
+                  onChange={(e) => setBucket(e.target.value as TimeseriesBucketSize)}
+                  style={{ width: 110 }}
+                >
+                  <option value="hour">hour</option>
+                  <option value="day">day</option>
+                  <option value="week">week</option>
+                </Select>
+                <Select
+                  value={days}
+                  onChange={(e) => setDays(Number(e.target.value))}
+                  style={{ width: 140 }}
+                >
+                  <option value={7}>Last 7 days</option>
+                  <option value={14}>Last 14 days</option>
+                  <option value={30}>Last 30 days</option>
+                  <option value={90}>Last 90 days</option>
+                </Select>
+              </div>
+            }
+          >
+            {timeseries.isLoading ? (
+              <div style={{ padding: 24 }}>
+                <CenteredSpinner />
+              </div>
+            ) : (
+              <TimeseriesChart
+                series={timeseries.data?.series ?? []}
+                bucket={bucket}
+                revenue
+                currency={revenue.data?.currency ?? currency}
+              />
+            )}
+          </Card>
+
+          <Card
+            title="Revenue"
+            description={`Conversions tagged with meta.revenue · last 90 days · ${revenue.data?.currency ?? currency}`}
+            padding="none"
+            actions={
+              <Input
+                value={currency}
+                maxLength={8}
+                onChange={(e) =>
+                  setCurrency(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))
+                }
+                style={{ width: 90 }}
+              />
+            }
+          >
+            {revenue.isLoading ? (
+              <div style={{ padding: 24 }}>
+                <CenteredSpinner />
+              </div>
+            ) : revenue.isError ? (
+              <div className="lkd__empty">Couldn't load revenue.</div>
+            ) : (
+              <>
+                <div className="lkd__rev-grid">
+                  <div className="lkd__rev-stat">
+                    <div className="lkd__rev-stat-label">Total revenue</div>
+                    <div className="lkd__rev-stat-value">
+                      {formatRevenue(revenue.data?.total_revenue ?? 0, revenue.data?.currency ?? currency)}
+                    </div>
+                  </div>
+                  <div className="lkd__rev-stat">
+                    <div className="lkd__rev-stat-label">Conversions</div>
+                    <div className="lkd__rev-stat-value">
+                      {formatNumber(revenue.data?.conversion_count ?? 0)}
+                    </div>
+                  </div>
+                  <div className="lkd__rev-stat">
+                    <div className="lkd__rev-stat-label">Avg order value</div>
+                    <div className="lkd__rev-stat-value">
+                      {formatRevenue(revenue.data?.avg_order_value ?? 0, revenue.data?.currency ?? currency)}
+                    </div>
+                  </div>
+                </div>
+                {revenue.data?.by_source && revenue.data.by_source.length > 0 ? (
+                  <table className="ui-table">
+                    <thead>
+                      <tr>
+                        <th>Source</th>
+                        <th style={{ textAlign: 'right' }}>Revenue</th>
+                        <th style={{ textAlign: 'right' }}>Conversions</th>
+                        <th style={{ textAlign: 'right' }}>AOV</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {revenue.data.by_source.map((r) => (
+                        <tr key={r.source || '(none)'}>
+                          <td><code>{r.source || '(none)'}</code></td>
+                          <td style={{ textAlign: 'right' }}>
+                            {formatRevenue(r.revenue, revenue.data!.currency)}
+                          </td>
+                          <td style={{ textAlign: 'right' }}>{formatNumber(r.conversions)}</td>
+                          <td style={{ textAlign: 'right' }}>
+                            {formatRevenue(r.aov, revenue.data!.currency)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="lkd__empty">No revenue events in the window.</div>
+                )}
+              </>
+            )}
           </Card>
 
           <Card

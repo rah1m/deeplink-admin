@@ -13,6 +13,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: '◉' },
   { to: '/links', label: 'Links', icon: '◇' },
+  { to: '/analytics', label: 'Analytics', icon: '◔' },
   { to: '/apps', label: 'Apps', icon: '⬚' },
   { to: '/events', label: 'Events', icon: '◊' },
   { to: '/users', label: 'Users', icon: '⌘', superAdminOnly: true },

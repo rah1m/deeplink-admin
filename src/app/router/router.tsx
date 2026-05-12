@@ -19,6 +19,7 @@ import { AppsPage } from '@pages/apps/apps-page'
 import { UsersPage } from '@pages/users/users-page'
 import { EventsPage } from '@pages/events/events-page'
 import { AuditPage } from '@pages/audit/audit-page'
+import { AnalyticsPage } from '@pages/analytics/analytics-page'
 import { NotFoundPage } from '@pages/not-found/not-found-page'
 
 const rootRoute = new RootRoute({
@@ -89,6 +90,12 @@ const eventsRoute = new Route({
   component: EventsPage,
 })
 
+const analyticsRoute = new Route({
+  getParentRoute: () => protectedRoute,
+  path: '/analytics',
+  component: AnalyticsPage,
+})
+
 const usersRoute = new Route({
   getParentRoute: () => protectedRoute,
   path: '/users',
@@ -122,6 +129,7 @@ const routeTree = rootRoute.addChildren([
     linkDetailRoute,
     appsRoute,
     eventsRoute,
+    analyticsRoute,
     usersRoute,
     auditRoute,
   ]),

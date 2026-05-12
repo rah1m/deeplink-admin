@@ -1,6 +1,11 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { linkApi, linkQueryKeys } from './api'
-import type { GroupBy, ListLinksParams } from './types'
+import type {
+  GroupBy,
+  ListLinksParams,
+  RevenueParams,
+  TimeseriesParams,
+} from './types'
 
 export function useLinks(params: ListLinksParams) {
   return useQuery({
@@ -33,5 +38,33 @@ export function useLinkStats(shortCode: string | undefined, groupBy?: GroupBy) {
       : ['links', 'stats', 'none'],
     queryFn: () => linkApi.stats(shortCode!, groupBy),
     enabled: !!shortCode,
+  })
+}
+
+export function useLinkTimeseries(
+  shortCode: string | undefined,
+  params: TimeseriesParams = {},
+) {
+  return useQuery({
+    queryKey: shortCode
+      ? linkQueryKeys.timeseries(shortCode, params)
+      : ['links', 'timeseries', 'none'],
+    queryFn: () => linkApi.timeseries(shortCode!, params),
+    enabled: !!shortCode,
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useLinkRevenue(
+  shortCode: string | undefined,
+  params: RevenueParams = {},
+) {
+  return useQuery({
+    queryKey: shortCode
+      ? linkQueryKeys.revenue(shortCode, params)
+      : ['links', 'revenue', 'none'],
+    queryFn: () => linkApi.revenue(shortCode!, params),
+    enabled: !!shortCode,
+    placeholderData: keepPreviousData,
   })
 }

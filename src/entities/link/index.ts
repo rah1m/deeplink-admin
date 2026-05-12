@@ -12,6 +12,20 @@ export type {
   LinkStatsResponse,
   PublicLinkInfo,
   UtmParams,
+  TimeseriesBucket,
+  TimeseriesBucketSize,
+  TimeseriesParams,
+  TimeseriesResponse,
+  RevenueBreakdown,
+  RevenueBySource,
+  RevenueParams,
 } from './types'
 export { linkApi, linkQueryKeys } from './api'
-export { useLinks, useLinkPublic, useLinkAdmin, useLinkStats } from './queries'
+export {
+  useLinks,
+  useLinkPublic,
+  useLinkAdmin,
+  useLinkStats,
+  useLinkTimeseries,
+  useLinkRevenue,
+} from './queries'
