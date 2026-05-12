@@ -17,3 +17,7 @@ export interface CreateUserInput {
 export interface UpdateUserAppsInput {
   app_ids: number[]
 }
+
+export interface ResetUserPasswordInput {
+  new_password: string
+}

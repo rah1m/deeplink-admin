@@ -27,6 +27,11 @@ export interface SetupResponse {
 
 const skipAuthConfig = { _skipAuth: true } as never
 
+export interface ChangePasswordInput {
+  current_password: string
+  new_password: string
+}
+
 export const authApi = {
   setup: (body: SetupInput): Promise<SetupResponse> =>
     http.post<SetupResponse>('/v1/auth/setup', body, skipAuthConfig).then((r) => r.data),
@@ -34,4 +39,6 @@ export const authApi = {
     http.post<LoginResponse>('/v1/auth/login', body, skipAuthConfig).then((r) => r.data),
   logout: (refreshToken: string) =>
     http.post<void>('/v1/auth/logout', { refresh_token: refreshToken }),
+  changePassword: (body: ChangePasswordInput): Promise<void> =>
+    http.post<void>('/v1/auth/password', body).then((r) => r.data),
 }

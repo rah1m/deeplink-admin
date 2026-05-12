@@ -1,11 +1,21 @@
-import { Badge, Button } from '@shared/ui'
+import { useState } from 'react'
+import { Badge, Button, Modal, useToast } from '@shared/ui'
 import { useSession } from '@entities/session'
-import { useLogout } from '@features/auth'
+import { ChangePasswordForm, useChangePassword, useLogout } from '@features/auth'
+import { extractError } from '@shared/api'
 import './header.css'
 
 export function Header() {
   const user = useSession((s) => s.user)
   const logout = useLogout()
+  const changePassword = useChangePassword()
+  const toast = useToast()
+  const [pwOpen, setPwOpen] = useState(false)
+
+  const closePw = () => {
+    setPwOpen(false)
+    changePassword.reset()
+  }
 
   return (
     <header className="topbar">
@@ -22,6 +32,11 @@ export function Header() {
             </div>
           </div>
         )}
+        {user && (
+          <Button variant="ghost" size="sm" onClick={() => setPwOpen(true)}>
+            Change password
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"
@@ -31,6 +46,22 @@ export function Header() {
           Sign out
         </Button>
       </div>
+
+      <Modal open={pwOpen} onClose={closePw} title="Change password">
+        <ChangePasswordForm
+          loading={changePassword.isPending}
+          error={changePassword.isError ? extractError(changePassword.error) : undefined}
+          onCancel={closePw}
+          onSubmit={(input) =>
+            changePassword.mutate(input, {
+              onSuccess: () => {
+                toast?.success('Password changed')
+                closePw()
+              },
+            })
+          }
+        />
+      </Modal>
     </header>
   )
 }

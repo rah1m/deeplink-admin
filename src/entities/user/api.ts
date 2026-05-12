@@ -1,5 +1,10 @@
 import { http } from '@shared/api'
-import type { CreateUserInput, UpdateUserAppsInput, User } from './types'
+import type {
+  CreateUserInput,
+  ResetUserPasswordInput,
+  UpdateUserAppsInput,
+  User,
+} from './types'
 
 export const userApi = {
   list: () => http.get<User[]>('/v1/admin/users').then((r) => r.data),
@@ -8,6 +13,8 @@ export const userApi = {
   setApps: (id: number, body: UpdateUserAppsInput) =>
     http.put<User>(`/v1/admin/users/${id}/apps`, body).then((r) => r.data),
   delete: (id: number) => http.delete<void>(`/v1/admin/users/${id}`).then((r) => r.data),
+  resetPassword: (id: number, body: ResetUserPasswordInput) =>
+    http.post<void>(`/v1/admin/users/${id}/password`, body).then((r) => r.data),
 }
 
 export const userQueryKeys = {

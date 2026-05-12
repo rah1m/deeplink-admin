@@ -17,6 +17,10 @@ import {
   useUpdateUserApps,
   useDeleteUser,
 } from "@features/user-permissions";
+import {
+  ResetUserPasswordForm,
+  useResetUserPassword,
+} from "@features/user-password-reset";
 import { useSession } from "@entities/session";
 import { extractError } from "@shared/api";
 import { formatDate } from "@shared/lib";
@@ -30,10 +34,12 @@ export function UsersPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [permsOf, setPermsOf] = useState<User | null>(null);
   const [deleting, setDeleting] = useState<User | null>(null);
+  const [resettingPw, setResettingPw] = useState<User | null>(null);
 
   const create = useCreateUser();
   const setApps = useUpdateUserApps(permsOf?.id ?? 0);
   const remove = useDeleteUser();
+  const resetPw = useResetUserPassword(resettingPw?.id ?? 0);
 
   const appNameOf = (id: number) =>
     apps?.data?.find((a) => a?.id === id)?.name ?? `#${id}`;
@@ -102,7 +108,7 @@ export function UsersPage() {
       key: "actions",
       header: "",
       align: "right",
-      width: "181px",
+      width: "320px",
       render: (u) => (
         <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
           {u?.role !== "super_admin" && (
@@ -110,6 +116,9 @@ export function UsersPage() {
               Permissions
             </Button>
           )}
+          <Button size="sm" variant="ghost" onClick={() => setResettingPw(u)}>
+            Reset password
+          </Button>
           {u?.id !== me?.id && (
             <Button size="sm" variant="ghost" onClick={() => setDeleting(u)}>
               Delete
@@ -174,6 +183,36 @@ export function UsersPage() {
                   setPermsOf(null);
                 },
                 onError: (err) => toast?.error(extractError(err)),
+              })
+            }
+          />
+        )}
+      </Modal>
+
+      <Modal
+        open={!!resettingPw}
+        onClose={() => {
+          setResettingPw(null);
+          resetPw?.reset();
+        }}
+        title={resettingPw ? `Reset password — ${resettingPw?.username}` : ""}
+      >
+        {resettingPw && (
+          <ResetUserPasswordForm
+            username={resettingPw?.username}
+            loading={resetPw?.isPending}
+            error={resetPw?.isError ? extractError(resetPw?.error) : undefined}
+            onCancel={() => {
+              setResettingPw(null);
+              resetPw?.reset();
+            }}
+            onSubmit={(newPassword) =>
+              resetPw?.mutate(newPassword, {
+                onSuccess: () => {
+                  toast?.success("Password reset");
+                  setResettingPw(null);
+                  resetPw?.reset();
+                },
               })
             }
           />

@@ -1,3 +1,5 @@
 export { useLogin } from './use-login'
 export { useSetup } from './use-setup'
 export { useLogout } from './use-logout'
+export { useChangePassword } from './use-change-password'
+export { ChangePasswordForm } from './change-password-form'
