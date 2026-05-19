@@ -1,4 +1,9 @@
-export type AuditTargetType = 'user' | 'link' | 'app' | 'auth'
+export type AuditTargetType =
+  | 'user'
+  | 'link'
+  | 'app'
+  | 'auth'
+  | 'service_token'
 
 export type AuditAction =
   | 'auth.login.success'
@@ -15,6 +20,8 @@ export type AuditAction =
   | 'link.updated'
   | 'link.deleted'
   | 'link.cloned'
+  | 'service_token.created'
+  | 'service_token.revoked'
   | (string & {})
 
 export interface AuditEntry {

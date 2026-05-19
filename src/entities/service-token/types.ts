@@ -4,7 +4,9 @@ export interface ServiceToken {
   name: string
   key_prefix: string
   created_at: string
+  created_by?: number | null
   last_used_at?: string | null
+  revoked_at?: string | null
 }
 
 export interface CreateServiceTokenInput {

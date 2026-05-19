@@ -36,6 +36,8 @@ const ACTION_TONES: Record<string, 'success' | 'warning' | 'danger' | 'info' | '
   'link.updated': 'info',
   'link.deleted': 'danger',
   'link.cloned': 'primary',
+  'service_token.created': 'success',
+  'service_token.revoked': 'danger',
 }
 
 function toneFor(action: string) {
@@ -162,7 +164,7 @@ export function AuditPage() {
     <>
       <PageHeader
         title="Audit Log"
-        description="Sensitive operations recorded by the API: auth attempts, user/app/link CRUD."
+        description="Sensitive operations recorded by the API: auth attempts, user/app/link CRUD, and service token lifecycle."
       />
 
       <Card padding="md" style={{ marginBottom: 16 }}>
@@ -185,6 +187,7 @@ export function AuditPage() {
             <option value="link">link</option>
             <option value="app">app</option>
             <option value="auth">auth</option>
+            <option value="service_token">service_token</option>
           </Select>
           <Input
             label="Target ID"
