@@ -10,6 +10,7 @@ import {
 } from '@shared/ui'
 import { AppForm, useCreateApp } from '@features/app-create'
 import { useUpdateApp } from '@features/app-edit'
+import { ServiceTokensManager } from '@features/service-tokens'
 import { useApps, type App } from '@entities/app'
 import { useSession } from '@entities/session'
 import { extractError } from '@shared/api'
@@ -22,6 +23,7 @@ export function AppsPage() {
 
   const [createOpen, setCreateOpen] = useState(false)
   const [editing, setEditing] = useState<App | null>(null)
+  const [tokensFor, setTokensFor] = useState<App | null>(null)
 
   const create = useCreateApp()
   const update = useUpdateApp(editing?.id ?? 0)
@@ -71,12 +73,17 @@ export function AppsPage() {
       key: 'actions',
       header: '',
       align: 'right',
-      width: '90px',
+      width: '200px',
       render: (a) =>
         isSuper ? (
-          <Button size="sm" variant="ghost" onClick={() => setEditing(a)}>
-            Edit
-          </Button>
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+            <Button size="sm" variant="ghost" onClick={() => setTokensFor(a)}>
+              Tokens
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setEditing(a)}>
+              Edit
+            </Button>
+          </div>
         ) : null,
     },
   ]
@@ -121,6 +128,17 @@ export function AppsPage() {
             })
           }
         />
+      </Modal>
+
+      <Modal
+        open={!!tokensFor}
+        onClose={() => setTokensFor(null)}
+        title={tokensFor ? `Service tokens — ${tokensFor.name}` : ''}
+        size="lg"
+      >
+        {tokensFor && (
+          <ServiceTokensManager appId={tokensFor.id} appName={tokensFor.name} />
+        )}
       </Modal>
 
       <Modal

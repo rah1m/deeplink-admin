@@ -20,35 +20,39 @@ import type {
 export const linkApi = {
   list: (params: ListLinksParams = {}) =>
     http
-      .get<ListLinksResponse>('/v1/links', { params })
+      .get<ListLinksResponse>('/v1/admin/links', { params })
       .then((r) => r.data),
   create: (body: CreateLinkInput) =>
-    http.post<CreateLinkResponse>('/v1/links', body).then((r) => r.data),
+    http.post<CreateLinkResponse>('/v1/admin/links', body).then((r) => r.data),
   clone: (shortCode: string, body: CloneLinkInput = {}) =>
     http
-      .post<CreateLinkResponse>(`/v1/links/${shortCode}/clone`, body)
+      .post<CreateLinkResponse>(`/v1/admin/links/${shortCode}/clone`, body)
       .then((r) => r.data),
   getAdmin: (shortCode: string) =>
     http.get<DynamicLink>(`/v1/admin/links/${shortCode}`).then((r) => r.data),
   getPublic: (shortCode: string) =>
     http.get<PublicLinkInfo>(`/v1/links/${shortCode}`).then((r) => r.data),
   update: (shortCode: string, body: UpdateLinkInput) =>
-    http.patch<DynamicLink>(`/v1/links/${shortCode}`, body).then((r) => r.data),
+    http
+      .patch<DynamicLink>(`/v1/admin/links/${shortCode}`, body)
+      .then((r) => r.data),
   remove: (shortCode: string) =>
-    http.delete<void>(`/v1/links/${shortCode}`).then((r) => r.data),
+    http.delete<void>(`/v1/admin/links/${shortCode}`).then((r) => r.data),
   stats: (shortCode: string, groupBy?: GroupBy) =>
     http
-      .get<LinkStatsResponse>(`/v1/links/${shortCode}/stats`, {
+      .get<LinkStatsResponse>(`/v1/admin/links/${shortCode}/stats`, {
         params: groupBy ? { group_by: groupBy } : undefined,
       })
       .then((r) => r.data),
   timeseries: (shortCode: string, params: TimeseriesParams = {}) =>
     http
-      .get<TimeseriesResponse>(`/v1/links/${shortCode}/timeseries`, { params })
+      .get<TimeseriesResponse>(`/v1/admin/links/${shortCode}/timeseries`, {
+        params,
+      })
       .then((r) => r.data),
   revenue: (shortCode: string, params: RevenueParams = {}) =>
     http
-      .get<RevenueBreakdown>(`/v1/links/${shortCode}/revenue`, { params })
+      .get<RevenueBreakdown>(`/v1/admin/links/${shortCode}/revenue`, { params })
       .then((r) => r.data),
   qrUrl: (shortCode: string, size = 256) =>
     `${env.apiBaseUrl}/v1/links/${shortCode}/qr?size=${size}`,

@@ -19,6 +19,15 @@ export interface LinkAuthor {
   username: string;
 }
 
+export type LinkSource = "admin" | "service";
+
+export type LinkSourceFilter = LinkSource | "all";
+
+export interface LinkServiceTokenRef {
+  id: number;
+  name: string;
+}
+
 export interface DynamicLink {
   id: number;
   short_code: string;
@@ -29,7 +38,9 @@ export interface DynamicLink {
   is_active: boolean;
   expires_at: string | null;
   created_at: string;
+  source?: LinkSource;
   created_by?: LinkAuthor;
+  created_by_service_token?: LinkServiceTokenRef;
   social_meta?: SocialMeta;
   utm_params?: UtmParams;
   payload?: Record<string, unknown>;
@@ -47,6 +58,7 @@ export interface ListLinksResponse {
 export interface ListLinksParams {
   app_id?: number;
   q?: string;
+  source?: LinkSourceFilter;
   limit?: number;
   offset?: number;
 }
@@ -88,6 +100,10 @@ export type GroupBy =
   | "utm_term"
   | "utm_content";
 
+export type EventTypeKey = "click" | "install" | "open" | "conversion";
+
+export type EventTypeCounts = Partial<Record<EventTypeKey, number>>;
+
 export interface LinkStatsResponse {
   short_code: string;
   link_id: number;
@@ -96,8 +112,8 @@ export interface LinkStatsResponse {
   installs: number;
   opens: number;
   conversions: number;
-  by_type?: Record<string, number>;
-  by_utm?: Record<string, Record<string, number>>;
+  by_type: EventTypeCounts;
+  by_utm?: Record<string, EventTypeCounts>;
 }
 
 export interface PublicLinkInfo {

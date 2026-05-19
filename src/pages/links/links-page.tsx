@@ -14,12 +14,24 @@ import {
   type Column,
 } from "@shared/ui";
 import { LinkForm, useCreateLink } from "@features/link-create";
-import { useLinks, type DynamicLink, linkApi } from "@entities/link";
+import {
+  useLinks,
+  type DynamicLink,
+  type LinkSourceFilter,
+  linkApi,
+} from "@entities/link";
 import { useApps } from "@entities/app";
-import { formatDate, formatNumber, copyToClipboard } from "@shared/lib";
+import { formatDate, formatNumber, copyToClipboard, cn } from "@shared/lib";
 import { extractError } from "@shared/api";
+import "./links.css";
 
 const PAGE_SIZE = 20;
+
+const SOURCE_TABS: { value: LinkSourceFilter; label: string }[] = [
+  { value: "admin", label: "Campaigns" },
+  { value: "service", label: "Programmatic" },
+  { value: "all", label: "All" },
+];
 
 export function LinksPage() {
   const navigate = useNavigate();
@@ -29,6 +41,7 @@ export function LinksPage() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [offset, setOffset] = useState(0);
+  const [source, setSource] = useState<LinkSourceFilter>("admin");
   const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
@@ -44,6 +57,7 @@ export function LinksPage() {
     offset,
     app_id: appId ? Number(appId) : undefined,
     q: debouncedSearch || undefined,
+    source,
   };
   const links = useLinks(params);
   const create = useCreateLink();
@@ -85,7 +99,16 @@ export function LinksPage() {
     {
       key: "deep",
       header: "Deep link",
-      render: (l) => <span className="ellipsis">{l.deep_link}</span>,
+      render: (l) => (
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <span className="ellipsis">{l.deep_link}</span>
+          {l.source === "service" && (
+            <Badge tone="info">
+              {l.created_by_service_token?.name ?? "service"}
+            </Badge>
+          )}
+        </span>
+      ),
     },
     {
       key: "status",
@@ -153,6 +176,30 @@ export function LinksPage() {
           <Button onClick={() => setCreateOpen(true)}>+ New link</Button>
         }
       />
+
+      <div className="lnk__tabs" role="tablist" aria-label="Link source">
+        {SOURCE_TABS.map((t) => {
+          const active = source === t.value;
+          const count =
+            active && links.data ? formatNumber(links.data.total) : null;
+          return (
+            <button
+              key={t.value}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              className={cn("lnk__tab", active && "lnk__tab--active")}
+              onClick={() => {
+                setSource(t.value);
+                setOffset(0);
+              }}
+            >
+              {t.label}
+              {count != null && <span className="lnk__tab-count">{count}</span>}
+            </button>
+          );
+        })}
+      </div>
 
       <Card padding="md" style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>

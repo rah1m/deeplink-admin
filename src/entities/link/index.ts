@@ -1,6 +1,9 @@
 export type {
   DynamicLink,
   LinkAuthor,
+  LinkServiceTokenRef,
+  LinkSource,
+  LinkSourceFilter,
   LinkStats,
   ListLinksParams,
   ListLinksResponse,
@@ -9,6 +12,8 @@ export type {
   UpdateLinkInput,
   CloneLinkInput,
   GroupBy,
+  EventTypeKey,
+  EventTypeCounts,
   LinkStatsResponse,
   PublicLinkInfo,
   UtmParams,

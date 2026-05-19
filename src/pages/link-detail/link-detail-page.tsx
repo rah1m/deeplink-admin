@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate, useParams } from '@tanstack/react-router'
+import { useState } from "react";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   Badge,
   Button,
@@ -12,10 +12,10 @@ import {
   Select,
   Stat,
   useToast,
-} from '@shared/ui'
-import { LinkForm } from '@features/link-create'
-import { useDeleteLink, useUpdateLink } from '@features/link-edit'
-import { useCloneLink } from '@features/link-clone'
+} from "@shared/ui";
+import { LinkForm } from "@features/link-create";
+import { useDeleteLink, useUpdateLink } from "@features/link-edit";
+import { useCloneLink } from "@features/link-clone";
 import {
   linkApi,
   useLinkAdmin,
@@ -24,72 +24,73 @@ import {
   useLinkTimeseries,
   type GroupBy,
   type TimeseriesBucketSize,
-} from '@entities/link'
-import { copyToClipboard, formatDate, formatNumber } from '@shared/lib'
-import { extractError } from '@shared/api'
-import { TimeseriesChart } from '@pages/analytics/charts'
-import './link-detail.css'
+} from "@entities/link";
+import { copyToClipboard, formatDate, formatNumber } from "@shared/lib";
+import { extractError } from "@shared/api";
+import { TimeseriesChart } from "@pages/analytics/charts";
+import "./link-detail.css";
 
 function formatRevenue(value: number, currency: string) {
   try {
     return new Intl.NumberFormat(undefined, {
-      style: 'currency',
+      style: "currency",
       currency,
       maximumFractionDigits: 2,
-    }).format(value)
+    }).format(value);
   } catch {
-    return `${formatNumber(Math.round(value))} ${currency}`
+    return `${formatNumber(Math.round(value))} ${currency}`;
   }
 }
 
 export function LinkDetailPage() {
-  const { shortCode } = useParams({ strict: false }) as { shortCode: string }
-  const navigate = useNavigate()
-  const toast = useToast()
+  const { shortCode } = useParams({ strict: false }) as { shortCode: string };
+  const navigate = useNavigate();
+  const toast = useToast();
 
-  const link = useLinkAdmin(shortCode)
-  const [groupBy, setGroupBy] = useState<GroupBy | ''>('')
-  const stats = useLinkStats(shortCode, groupBy || undefined)
-  const [bucket, setBucket] = useState<TimeseriesBucketSize>('day')
-  const [days, setDays] = useState<number>(30)
-  const [currency, setCurrency] = useState<string>('AZN')
-  const timeseries = useLinkTimeseries(shortCode, { bucket, days })
-  const revenue = useLinkRevenue(shortCode, { currency, days: 90 })
+  const link = useLinkAdmin(shortCode);
+  const [groupBy, setGroupBy] = useState<GroupBy | "">("");
+  const stats = useLinkStats(shortCode, groupBy || undefined);
+  const [bucket, setBucket] = useState<TimeseriesBucketSize>("day");
+  const [days, setDays] = useState<number>(30);
+  const [currency, setCurrency] = useState<string>("AZN");
+  const timeseries = useLinkTimeseries(shortCode, { bucket, days });
+  const revenue = useLinkRevenue(shortCode, { currency, days: 90 });
 
-  const update = useUpdateLink(shortCode)
-  const clone = useCloneLink(shortCode)
-  const remove = useDeleteLink(shortCode)
-  const [editOpen, setEditOpen] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
+  const update = useUpdateLink(shortCode);
+  const clone = useCloneLink(shortCode);
+  const remove = useDeleteLink(shortCode);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
-  if (link.isLoading) return <CenteredSpinner />
+  if (link.isLoading) return <CenteredSpinner />;
   if (link.isError || !link.data) {
-    return <div>Link not found.</div>
+    return <div>Link not found.</div>;
   }
 
-  const data = link.data
-  const shortUrl = linkApi.shortUrl(shortCode)
-  const qrUrl = linkApi.qrUrl(shortCode, 320)
+  const data = link.data;
+  const shortUrl = linkApi.shortUrl(shortCode);
+  const qrUrl = linkApi.qrUrl(shortCode, 320);
 
-  const expired = data.expires_at != null && new Date(data.expires_at) < new Date()
+  const expired =
+    data.expires_at != null && new Date(data.expires_at) < new Date();
 
   const onCopy = async () => {
-    await copyToClipboard(shortUrl)
-    toast.success('Short URL copied')
-  }
+    await copyToClipboard(shortUrl);
+    toast.success("Short URL copied");
+  };
 
   const toggleActive = (next: boolean) => {
     update.mutate(
       { is_active: next },
       {
         onSuccess: () => {
-          toast.success(next ? 'Link activated' : 'Link deactivated')
-          link.refetch()
+          toast.success(next ? "Link activated" : "Link deactivated");
+          link.refetch();
         },
         onError: (err) => toast.error(extractError(err)),
       },
-    )
-  }
+    );
+  };
 
   const onClone = () => {
     clone.mutate(
@@ -98,19 +99,19 @@ export function LinkDetailPage() {
         onSuccess: (res) => toast.success(`Cloned as ${res.short_code}`),
         onError: (err) => toast.error(extractError(err)),
       },
-    )
-  }
+    );
+  };
 
   const onConfirmDelete = () => {
     remove.mutate(undefined, {
       onSuccess: () => {
-        toast.success('Link deleted')
-        setDeleteOpen(false)
-        navigate({ to: '/links' })
+        toast.success("Link deleted");
+        setDeleteOpen(false);
+        navigate({ to: "/links" });
       },
       onError: (err) => toast.error(extractError(err)),
-    })
-  }
+    });
+  };
 
   const statusBadge = !data.is_active ? (
     <Badge tone="neutral">Inactive</Badge>
@@ -118,15 +119,15 @@ export function LinkDetailPage() {
     <Badge tone="warning">Expired</Badge>
   ) : (
     <Badge tone="success">Live</Badge>
-  )
+  );
 
   return (
     <>
       <PageHeader
         title={
           <span>
-            <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>
-              <Link to="/links">Links</Link> /{' '}
+            <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>
+              <Link to="/links">Links</Link> /{" "}
             </span>
             <code>{shortCode}</code>
           </span>
@@ -137,7 +138,11 @@ export function LinkDetailPage() {
             <Button variant="secondary" onClick={onCopy}>
               Copy URL
             </Button>
-            <Button variant="secondary" onClick={onClone} loading={clone.isPending}>
+            <Button
+              variant="secondary"
+              onClick={onClone}
+              loading={clone.isPending}
+            >
               Clone
             </Button>
             <Button onClick={() => setEditOpen(true)}>Edit</Button>
@@ -151,13 +156,21 @@ export function LinkDetailPage() {
       <div className="lkd__grid">
         <div className="lkd__col">
           <div className="lkd__stats">
-            <Stat label="Clicks" value={formatNumber(stats.data?.clicks)} tone="primary" />
+            <Stat
+              label="Clicks"
+              value={formatNumber(stats.data?.clicks)}
+              tone="primary"
+            />
             <Stat
               label="Installs"
               value={formatNumber(stats.data?.installs)}
               tone="success"
             />
-            <Stat label="Opens" value={formatNumber(stats.data?.opens)} tone="neutral" />
+            <Stat
+              label="Opens"
+              value={formatNumber(stats.data?.opens)}
+              tone="neutral"
+            />
             <Stat
               label="Conversions"
               value={formatNumber(stats.data?.conversions)}
@@ -190,7 +203,11 @@ export function LinkDetailPage() {
                 <>
                   <dt>Fallback URL</dt>
                   <dd>
-                    <a href={data.fallback_url} target="_blank" rel="noreferrer">
+                    <a
+                      href={data.fallback_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       {data.fallback_url}
                     </a>
                   </dd>
@@ -201,9 +218,13 @@ export function LinkDetailPage() {
                 <>
                   <dt>App</dt>
                   <dd>
-                    {data.app.name}{' '}
+                    {data.app.name}{" "}
                     <span className="lkd__sub">
-                      ({data.app.ios_bundle_id ?? data.app.android_package ?? '—'})
+                      (
+                      {data.app.ios_bundle_id ??
+                        data.app.android_package ??
+                        "—"}
+                      )
                     </span>
                   </dd>
                 </>
@@ -211,23 +232,41 @@ export function LinkDetailPage() {
 
               <dt>Created</dt>
               <dd>
-                <span style={{ color: 'var(--color-text-muted)' }}>
+                <span style={{ color: "var(--color-text-muted)" }}>
                   {formatDate(data.created_at)}
                 </span>
                 {data.created_by && (
                   <>
-                    {' '}
+                    {" "}
                     <span className="lkd__sub">
                       by {data.created_by.username}
                     </span>
                   </>
                 )}
+                {data.created_by_service_token && (
+                  <>
+                    {" "}
+                    <span className="lkd__sub">
+                      via service token{" "}
+                      <code>{data.created_by_service_token.name}</code>
+                    </span>
+                  </>
+                )}
               </dd>
+
+              {data.source === "service" && (
+                <>
+                  <dt>Source</dt>
+                  <dd>
+                    <Badge tone="info">Programmatic</Badge>
+                  </dd>
+                </>
+              )}
 
               <dt>Expires</dt>
               <dd>
                 {data.expires_at ? (
-                  <span style={{ color: 'var(--color-text-muted)' }}>
+                  <span style={{ color: "var(--color-text-muted)" }}>
                     {formatDate(data.expires_at)}
                   </span>
                 ) : (
@@ -279,10 +318,12 @@ export function LinkDetailPage() {
             description="Bucketed clicks / installs / conversions with revenue overlay."
             padding="none"
             actions={
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: "flex", gap: 8 }}>
                 <Select
                   value={bucket}
-                  onChange={(e) => setBucket(e.target.value as TimeseriesBucketSize)}
+                  onChange={(e) =>
+                    setBucket(e.target.value as TimeseriesBucketSize)
+                  }
                   style={{ width: 110 }}
                 >
                   <option value="hour">hour</option>
@@ -325,7 +366,9 @@ export function LinkDetailPage() {
                 value={currency}
                 maxLength={8}
                 onChange={(e) =>
-                  setCurrency(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))
+                  setCurrency(
+                    e.target.value.toUpperCase().replace(/[^A-Z]/g, ""),
+                  )
                 }
                 style={{ width: 90 }}
               />
@@ -343,7 +386,10 @@ export function LinkDetailPage() {
                   <div className="lkd__rev-stat">
                     <div className="lkd__rev-stat-label">Total revenue</div>
                     <div className="lkd__rev-stat-value">
-                      {formatRevenue(revenue.data?.total_revenue ?? 0, revenue.data?.currency ?? currency)}
+                      {formatRevenue(
+                        revenue.data?.total_revenue ?? 0,
+                        revenue.data?.currency ?? currency,
+                      )}
                     </div>
                   </div>
                   <div className="lkd__rev-stat">
@@ -355,29 +401,37 @@ export function LinkDetailPage() {
                   <div className="lkd__rev-stat">
                     <div className="lkd__rev-stat-label">Avg order value</div>
                     <div className="lkd__rev-stat-value">
-                      {formatRevenue(revenue.data?.avg_order_value ?? 0, revenue.data?.currency ?? currency)}
+                      {formatRevenue(
+                        revenue.data?.avg_order_value ?? 0,
+                        revenue.data?.currency ?? currency,
+                      )}
                     </div>
                   </div>
                 </div>
-                {revenue.data?.by_source && revenue.data.by_source.length > 0 ? (
+                {revenue.data?.by_source &&
+                revenue.data.by_source.length > 0 ? (
                   <table className="ui-table">
                     <thead>
                       <tr>
                         <th>Source</th>
-                        <th style={{ textAlign: 'right' }}>Revenue</th>
-                        <th style={{ textAlign: 'right' }}>Conversions</th>
-                        <th style={{ textAlign: 'right' }}>AOV</th>
+                        <th style={{ textAlign: "right" }}>Revenue</th>
+                        <th style={{ textAlign: "right" }}>Conversions</th>
+                        <th style={{ textAlign: "right" }}>AOV</th>
                       </tr>
                     </thead>
                     <tbody>
                       {revenue.data.by_source.map((r) => (
-                        <tr key={r.source || '(none)'}>
-                          <td><code>{r.source || '(none)'}</code></td>
-                          <td style={{ textAlign: 'right' }}>
+                        <tr key={r.source || "(none)"}>
+                          <td>
+                            <code>{r.source || "(none)"}</code>
+                          </td>
+                          <td style={{ textAlign: "right" }}>
                             {formatRevenue(r.revenue, revenue.data!.currency)}
                           </td>
-                          <td style={{ textAlign: 'right' }}>{formatNumber(r.conversions)}</td>
-                          <td style={{ textAlign: 'right' }}>
+                          <td style={{ textAlign: "right" }}>
+                            {formatNumber(r.conversions)}
+                          </td>
+                          <td style={{ textAlign: "right" }}>
                             {formatRevenue(r.aov, revenue.data!.currency)}
                           </td>
                         </tr>
@@ -385,7 +439,9 @@ export function LinkDetailPage() {
                     </tbody>
                   </table>
                 ) : (
-                  <div className="lkd__empty">No revenue events in the window.</div>
+                  <div className="lkd__empty">
+                    No revenue events in the window.
+                  </div>
                 )}
               </>
             )}
@@ -396,7 +452,7 @@ export function LinkDetailPage() {
             actions={
               <Select
                 value={groupBy}
-                onChange={(e) => setGroupBy(e.target.value as GroupBy | '')}
+                onChange={(e) => setGroupBy(e.target.value as GroupBy | "")}
                 style={{ width: 180 }}
               >
                 <option value="">No grouping</option>
@@ -410,30 +466,41 @@ export function LinkDetailPage() {
             padding="none"
           >
             {!groupBy ? (
-              <div className="lkd__empty">Pick a UTM dimension to break down events.</div>
-            ) : !stats.data?.by_utm || Object.keys(stats.data.by_utm).length === 0 ? (
+              <div className="lkd__empty">
+                Pick a UTM dimension to break down events.
+              </div>
+            ) : !stats.data?.by_utm ||
+              Object.keys(stats.data.by_utm).length === 0 ? (
               <div className="lkd__empty">No data for this dimension.</div>
             ) : (
               <table className="ui-table">
                 <thead>
                   <tr>
                     <th>{groupBy}</th>
-                    <th style={{ textAlign: 'right' }}>Click</th>
-                    <th style={{ textAlign: 'right' }}>Install</th>
-                    <th style={{ textAlign: 'right' }}>Open</th>
-                    <th style={{ textAlign: 'right' }}>Conversion</th>
+                    <th style={{ textAlign: "right" }}>Click</th>
+                    <th style={{ textAlign: "right" }}>Install</th>
+                    <th style={{ textAlign: "right" }}>Open</th>
+                    <th style={{ textAlign: "right" }}>Conversion</th>
                   </tr>
                 </thead>
                 <tbody>
                   {Object.entries(stats.data.by_utm).map(([k, v]) => (
-                    <tr key={k}>
+                    <tr key={k || "(none)"}>
                       <td>
-                        <code>{k}</code>
+                        <code>{k || "(none)"}</code>
                       </td>
-                      <td style={{ textAlign: 'right' }}>{formatNumber(v.click)}</td>
-                      <td style={{ textAlign: 'right' }}>{formatNumber(v.install)}</td>
-                      <td style={{ textAlign: 'right' }}>{formatNumber(v.open)}</td>
-                      <td style={{ textAlign: 'right' }}>{formatNumber(v.conversion)}</td>
+                      <td style={{ textAlign: "right" }}>
+                        {formatNumber(v.click ?? 0)}
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        {formatNumber(v.install ?? 0)}
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        {formatNumber(v.open ?? 0)}
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        {formatNumber(v.conversion ?? 0)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -452,12 +519,12 @@ export function LinkDetailPage() {
                 onClick={() => toggleActive(!data.is_active)}
                 loading={update.isPending}
               >
-                {data.is_active ? 'Deactivate' : 'Activate'}
+                {data.is_active ? "Deactivate" : "Activate"}
               </Button>
             </div>
             <p className="lkd__hint">
-              Deactivating returns 404 from the public redirect endpoint. Use Delete
-              for permanent removal — historical events are preserved.
+              Deactivating returns 404 from the public redirect endpoint. Use
+              Delete for permanent removal — historical events are preserved.
             </p>
           </Card>
 
@@ -469,7 +536,7 @@ export function LinkDetailPage() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => window.open(qrUrl, '_blank')}
+              onClick={() => window.open(qrUrl, "_blank")}
             >
               Download PNG
             </Button>
@@ -488,7 +555,7 @@ export function LinkDetailPage() {
           initial={{
             short_code: data.short_code,
             app_id: data.app?.id ?? data.app_id ?? undefined,
-            name: data.name ?? '',
+            name: data.name ?? "",
             deep_link: data.deep_link,
             fallback_url: data.fallback_url,
             expires_at: data.expires_at,
@@ -502,7 +569,7 @@ export function LinkDetailPage() {
           onSubmit={(input) =>
             update.mutate(
               {
-                name: input.name ?? '',
+                name: input.name ?? "",
                 deep_link: input.deep_link,
                 fallback_url: input.fallback_url,
                 expires_at: input.expires_at,
@@ -512,9 +579,9 @@ export function LinkDetailPage() {
               },
               {
                 onSuccess: () => {
-                  toast.success('Link updated')
-                  setEditOpen(false)
-                  link.refetch()
+                  toast.success("Link updated");
+                  setEditOpen(false);
+                  link.refetch();
                 },
                 onError: (err) => toast.error(extractError(err)),
               },
@@ -534,5 +601,5 @@ export function LinkDetailPage() {
         onConfirm={onConfirmDelete}
       />
     </>
-  )
+  );
 }
