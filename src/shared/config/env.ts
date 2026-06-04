@@ -1,6 +1,5 @@
 export const env = {
   apiBaseUrl:
-    import.meta.env.VITE_API_BASE_URL ??
-    'https://deeplink-production-6679.up.railway.app',
-  appName: 'Dynamic Links Admin',
-}
+    import.meta.env.VITE_API_BASE_URL ?? "https://dev-deep-link.azerconnect.az",
+  appName: "Dynamic Links Admin",
+};
