@@ -21,6 +21,16 @@
   border-top: 1px solid var(--color-border);
 }
 
+.app-form__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: -4px;
+  cursor: pointer;
+}
+
 .app-form__actions {
   display: flex;
   justify-content: flex-end;

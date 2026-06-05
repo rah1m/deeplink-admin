@@ -16,10 +16,25 @@ export function AppForm({ initial, submitLabel, loading, onSubmit, onCancel }: A
   const [domain, setDomain] = useState(initial?.domain ?? '')
   const [iosBundle, setIosBundle] = useState(initial?.ios_bundle_id ?? '')
   const [iosTeam, setIosTeam] = useState(initial?.ios_team_id ?? '')
+  const [iosScheme, setIosScheme] = useState(initial?.ios_url_scheme ?? '')
   const [androidPkg, setAndroidPkg] = useState(initial?.android_package ?? '')
   const [androidSha, setAndroidSha] = useState(initial?.android_sha256_fingerprint ?? '')
+  const [androidScheme, setAndroidScheme] = useState(initial?.android_url_scheme ?? '')
   const [appStoreUrl, setAppStoreUrl] = useState(initial?.app_store_url ?? '')
   const [playStoreUrl, setPlayStoreUrl] = useState(initial?.play_store_url ?? '')
+
+  // "Same as iOS" reflects the common case (95% of apps share the scheme).
+  // Start checked only when both schemes already match, to keep edits honest.
+  const [sameScheme, setSameScheme] = useState(
+    !!(initial?.ios_url_scheme && initial.ios_url_scheme === initial.android_url_scheme),
+  )
+
+  const effectiveAndroidScheme = sameScheme ? iosScheme : androidScheme
+  // Warn-only UX guard (RFC 3986 §3.1) — does not block submit.
+  const schemeWarn = (v: string) =>
+    v && !/^[a-z][a-z0-9+\-.]*$/.test(v)
+      ? 'Unusual scheme — expected lowercase letters, digits, +, -, .'
+      : undefined
 
   const meta = initial?.social_meta ?? {}
   const [metaTitle, setMetaTitle] = useState(meta.title ?? '')
@@ -38,8 +53,10 @@ export function AppForm({ initial, submitLabel, loading, onSubmit, onCancel }: A
       domain: domain || undefined,
       ios_bundle_id: iosBundle || undefined,
       ios_team_id: iosTeam || undefined,
+      ios_url_scheme: iosScheme || undefined,
       android_package: androidPkg || undefined,
       android_sha256_fingerprint: androidSha || undefined,
+      android_url_scheme: effectiveAndroidScheme || undefined,
       app_store_url: appStoreUrl || undefined,
       play_store_url: playStoreUrl || undefined,
       social_meta: Object.keys(social).length ? social : undefined,
@@ -78,6 +95,15 @@ export function AppForm({ initial, submitLabel, loading, onSubmit, onCancel }: A
         />
       </div>
       <Input
+        label="iOS URL Scheme"
+        placeholder="bakcell"
+        maxLength={64}
+        value={iosScheme}
+        onChange={(e) => setIosScheme(e.target.value)}
+        error={schemeWarn(iosScheme)}
+        hint="e.g. bakcell — used as the Universal-Link fallback. Usually the same value on both platforms."
+      />
+      <Input
         label="App Store URL"
         type="url"
         value={appStoreUrl}
@@ -99,6 +125,24 @@ export function AppForm({ initial, submitLabel, loading, onSubmit, onCancel }: A
         onChange={(e) => setAndroidSha(e.target.value)}
         hint="Comma-separated for multiple keys"
       />
+      <Input
+        label="Android URL Scheme"
+        placeholder="bakcell"
+        maxLength={64}
+        value={effectiveAndroidScheme}
+        disabled={sameScheme}
+        onChange={(e) => setAndroidScheme(e.target.value)}
+        error={sameScheme ? undefined : schemeWarn(androidScheme)}
+        hint="e.g. bakcell — used as the Universal-Link fallback. Usually the same value on both platforms."
+      />
+      <label className="app-form__checkbox">
+        <input
+          type="checkbox"
+          checked={sameScheme}
+          onChange={(e) => setSameScheme(e.target.checked)}
+        />
+        Same as iOS URL Scheme
+      </label>
       <Input
         label="Play Store URL"
         type="url"

@@ -10,8 +10,10 @@ export interface App {
   domain?: string
   ios_bundle_id?: string
   ios_team_id?: string
+  ios_url_scheme?: string
   android_package?: string
   android_sha256_fingerprint?: string
+  android_url_scheme?: string
   app_store_url?: string
   play_store_url?: string
   social_meta?: SocialMeta
@@ -23,8 +25,10 @@ export interface CreateAppInput {
   domain?: string
   ios_bundle_id?: string
   ios_team_id?: string
+  ios_url_scheme?: string
   android_package?: string
   android_sha256_fingerprint?: string
+  android_url_scheme?: string
   app_store_url?: string
   play_store_url?: string
   social_meta?: SocialMeta
