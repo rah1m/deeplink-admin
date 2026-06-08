@@ -60,6 +60,7 @@ export function LinkDetailPage() {
   const clone = useCloneLink(shortCode);
   const remove = useDeleteLink(shortCode);
   const [editOpen, setEditOpen] = useState(false);
+  const [cloneOpen, setCloneOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (link.isLoading) return <CenteredSpinner />;
@@ -92,11 +93,14 @@ export function LinkDetailPage() {
     );
   };
 
-  const onClone = () => {
+  const onConfirmClone = () => {
     clone.mutate(
       {},
       {
-        onSuccess: (res) => toast.success(`Cloned as ${res.short_code}`),
+        onSuccess: (res) => {
+          toast.success(`Cloned as ${res.short_code}`);
+          setCloneOpen(false);
+        },
         onError: (err) => toast.error(extractError(err)),
       },
     );
@@ -140,7 +144,7 @@ export function LinkDetailPage() {
             </Button>
             <Button
               variant="secondary"
-              onClick={onClone}
+              onClick={() => setCloneOpen(true)}
               loading={clone.isPending}
             >
               Clone
@@ -589,6 +593,16 @@ export function LinkDetailPage() {
           }
         />
       </Modal>
+
+      <ConfirmDialog
+        open={cloneOpen}
+        title={`Clone ${shortCode}?`}
+        description="Creates a new link with a fresh short code, copying this link's deep link, fallback, social meta, UTM and payload. The clone starts active and independent — edits to it won't affect the original."
+        confirmText="Clone link"
+        loading={clone.isPending}
+        onCancel={() => setCloneOpen(false)}
+        onConfirm={onConfirmClone}
+      />
 
       <ConfirmDialog
         open={deleteOpen}
