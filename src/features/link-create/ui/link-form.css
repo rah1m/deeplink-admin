@@ -28,6 +28,87 @@
   margin-top: 8px;
 }
 
+/* Scheme-prefix affix for the deep-link path field (SRE-0004). */
+.link-form__affix {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow: hidden;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.link-form__affix:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(11, 58, 130, 0.12);
+}
+
+.link-form__affix--error,
+.link-form__affix--error:focus-within {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgba(178, 42, 42, 0.12);
+}
+
+.link-form__affix-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 13px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  border-right: 1px solid var(--color-border);
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* The affix wrapper owns the border / focus ring — strip the inner input's. */
+.link-form__affix-input {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  flex: 1;
+}
+
+.link-form__affix-input:focus {
+  border: none;
+  box-shadow: none;
+}
+
+/* Per-platform composed preview when iOS / Android schemes diverge. */
+.link-form__compose {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.link-form__compose-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.link-form__compose-row code {
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+.link-form__compose-os {
+  flex: 0 0 56px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-subtle);
+}
+
 @media (max-width: 600px) {
   .link-form__grid {
     grid-template-columns: 1fr;

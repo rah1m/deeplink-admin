@@ -47,10 +47,22 @@ export function AppsPage() {
         a.ios_bundle_id ? <code>{a.ios_bundle_id}</code> : <span style={{ color: 'var(--color-text-subtle)' }}>—</span>,
     },
     {
+      key: 'ios_scheme',
+      header: 'iOS scheme',
+      render: (a) =>
+        a.ios_url_scheme ? <code>{a.ios_url_scheme}</code> : <span style={{ color: 'var(--color-text-subtle)' }}>—</span>,
+    },
+    {
       key: 'android',
       header: 'Android package',
       render: (a) =>
         a.android_package ? <code>{a.android_package}</code> : <span style={{ color: 'var(--color-text-subtle)' }}>—</span>,
+    },
+    {
+      key: 'android_scheme',
+      header: 'Android scheme',
+      render: (a) =>
+        a.android_url_scheme ? <code>{a.android_url_scheme}</code> : <span style={{ color: 'var(--color-text-subtle)' }}>—</span>,
     },
     {
       key: 'sha',
@@ -115,6 +127,7 @@ export function AppsPage() {
         size="lg"
       >
         <AppForm
+          mode="create"
           submitLabel="Create app"
           loading={create.isPending}
           onCancel={() => setCreateOpen(false)}
@@ -149,6 +162,7 @@ export function AppsPage() {
       >
         {editing && (
           <AppForm
+            mode="edit"
             initial={editing}
             submitLabel="Save"
             loading={update.isPending}

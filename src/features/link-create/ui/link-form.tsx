@@ -3,6 +3,7 @@ import { Input, Textarea, Select, Button } from '@shared/ui'
 import { useApps, type App } from '@entities/app'
 import type { CreateLinkInput, UtmParams } from '@entities/link'
 import type { SocialMeta } from '@entities/app'
+import { cn } from '@shared/lib'
 import './link-form.css'
 
 interface LinkFormProps {
@@ -47,9 +48,36 @@ export function LinkForm({
     initial?.payload ? JSON.stringify(initial.payload, null, 2) : '',
   )
   const [payloadError, setPayloadError] = useState<string>()
+  const [deepLinkError, setDeepLinkError] = useState<string>()
+
+  // SRE-0004: deep_link is now a scheme-less PATH. The selected app's scheme is
+  // shown as a static prefix; the server composes the full per-platform URI.
+  const selectedApp = apps.data?.find((a: App) => a.id === Number(appId))
+  const iosScheme = selectedApp?.ios_url_scheme
+  const androidScheme = selectedApp?.android_url_scheme
+  // Per-platform schemes can diverge (e.g. iOS bakcell:// vs Android bakcellapp://).
+  const schemesDiffer = !!iosScheme && !!androidScheme && iosScheme !== androidScheme
+  // Single inline prefix only when unambiguous: same value, or only one platform set.
+  const singlePrefix = schemesDiffer ? undefined : iosScheme ?? androidScheme
+  // Live preview of what the server composes per platform.
+  const previewPath = deepLink.trim().replace(/^\/+/, '') || 'product/123'
 
   const handle = (e: FormEvent) => {
     e.preventDefault()
+
+    // Mirror the server: strip leading slashes, reject a full URI.
+    const deepLinkPath = deepLink.trim().replace(/^\/+/, '')
+    if (!deepLinkPath) {
+      setDeepLinkError('Deep link is required')
+      return
+    }
+    if (deepLinkPath.includes('://')) {
+      setDeepLinkError(
+        'Deep link is now a path — drop the scheme (e.g. "product/123", not "myapp://product/123"). The app\'s scheme is added automatically.',
+      )
+      return
+    }
+    setDeepLinkError(undefined)
 
     let payload: Record<string, unknown> | undefined
     if (payloadText.trim()) {
@@ -78,7 +106,7 @@ export function LinkForm({
       short_code: shortCode || undefined,
       app_id: appId ? Number(appId) : undefined,
       name: name || undefined,
-      deep_link: deepLink,
+      deep_link: deepLinkPath,
       fallback_url: fallbackUrl,
       expires_at: expiresAt || undefined,
       social_meta: Object.keys(social).length ? social : undefined,
@@ -121,13 +149,59 @@ export function LinkForm({
         maxLength={120}
         hint="Internal admin label shown to your team. Not the public OG title."
       />
-      <Input
-        label="Deep link *"
-        required
-        placeholder="myapp://product/123"
-        value={deepLink}
-        onChange={(e) => setDeepLink(e.target.value)}
-      />
+      <div className="ui-field">
+        <label className="ui-field__label" htmlFor="link-deep-link">
+          Deep link *
+        </label>
+        <div
+          className={cn(
+            'link-form__affix',
+            deepLinkError && 'link-form__affix--error',
+          )}
+        >
+          {singlePrefix && (
+            <span className="link-form__affix-prefix">{singlePrefix}://</span>
+          )}
+          <input
+            id="link-deep-link"
+            className="ui-input link-form__affix-input"
+            required
+            placeholder="product/123"
+            value={deepLink}
+            onChange={(e) => {
+              setDeepLink(e.target.value)
+              setDeepLinkError(undefined)
+            }}
+          />
+        </div>
+        {deepLinkError ? (
+          <span className="ui-field__error">{deepLinkError}</span>
+        ) : (
+          <span className="ui-field__hint">
+            {schemesDiffer
+              ? 'Path only — composed per platform below (iOS and Android schemes differ).'
+              : singlePrefix
+                ? `Path only — the app's scheme (${singlePrefix}://) is added automatically at resolve time.`
+                : 'Path only, e.g. product/123 (no scheme). The app\'s URL scheme is prepended automatically.'}
+          </span>
+        )}
+        {schemesDiffer && (
+          <div className="link-form__compose">
+            <div className="link-form__compose-row">
+              <span className="link-form__compose-os">iOS</span>
+              <code>
+                {iosScheme}://{previewPath}
+              </code>
+            </div>
+            <div className="link-form__compose-row">
+              <span className="link-form__compose-os">Android</span>
+              <code>
+                {androidScheme}://{previewPath}
+              </code>
+            </div>
+          </div>
+        )}
+      </div>
       <Input
         label="Fallback URL *"
         required

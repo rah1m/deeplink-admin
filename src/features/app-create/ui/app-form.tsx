@@ -4,6 +4,8 @@ import type { CreateAppInput, SocialMeta } from '@entities/app'
 import './app-form.css'
 
 interface AppFormProps {
+  /** create requires both URL schemes (SRE-0004); edit keeps them optional. */
+  mode: 'create' | 'edit'
   initial?: Partial<CreateAppInput>
   submitLabel: string
   loading?: boolean
@@ -11,7 +13,15 @@ interface AppFormProps {
   onCancel?: () => void
 }
 
-export function AppForm({ initial, submitLabel, loading, onSubmit, onCancel }: AppFormProps) {
+// RFC 3986 §3.1 — now server-enforced. Drop a pasted "bakcell://" separator and
+// lower-case so the value matches what the resolver composes deep links from.
+const SCHEME_RE = /^[a-z][a-z0-9+\-.]*$/
+
+function normalizeScheme(raw: string): string {
+  return raw.trim().replace(/:\/\/.*$/, '').toLowerCase()
+}
+
+export function AppForm({ mode, initial, submitLabel, loading, onSubmit, onCancel }: AppFormProps) {
   const [name, setName] = useState(initial?.name ?? '')
   const [domain, setDomain] = useState(initial?.domain ?? '')
   const [iosBundle, setIosBundle] = useState(initial?.ios_bundle_id ?? '')
@@ -30,11 +40,10 @@ export function AppForm({ initial, submitLabel, loading, onSubmit, onCancel }: A
   )
 
   const effectiveAndroidScheme = sameScheme ? iosScheme : androidScheme
-  // Warn-only UX guard (RFC 3986 §3.1) — does not block submit.
-  const schemeWarn = (v: string) =>
-    v && !/^[a-z][a-z0-9+\-.]*$/.test(v)
-      ? 'Unusual scheme — expected lowercase letters, digits, +, -, .'
-      : undefined
+
+  // Submit-time errors (mirror the server). Cleared as the user edits.
+  const [iosSchemeErr, setIosSchemeErr] = useState<string>()
+  const [androidSchemeErr, setAndroidSchemeErr] = useState<string>()
 
   const meta = initial?.social_meta ?? {}
   const [metaTitle, setMetaTitle] = useState(meta.title ?? '')
@@ -43,6 +52,25 @@ export function AppForm({ initial, submitLabel, loading, onSubmit, onCancel }: A
 
   const handle = (e: FormEvent) => {
     e.preventDefault()
+
+    // SRE-0004: schemes are the resolver's source of truth — required on create,
+    // optional on edit (omitting leaves the existing value untouched).
+    const required = mode === 'create'
+    const iosNorm = normalizeScheme(iosScheme)
+    const androidNorm = sameScheme ? iosNorm : normalizeScheme(androidScheme)
+
+    const validate = (v: string): string | undefined => {
+      if (!v) return required ? 'URL scheme is required' : undefined
+      if (!SCHEME_RE.test(v))
+        return 'Invalid scheme — lowercase letters, digits, + - . only (no "://" or path)'
+      return undefined
+    }
+    const iosErr = validate(iosNorm)
+    const androidErr = sameScheme ? iosErr : validate(androidNorm)
+    setIosSchemeErr(iosErr)
+    setAndroidSchemeErr(sameScheme ? undefined : androidErr)
+    if (iosErr || androidErr) return
+
     const social: SocialMeta = {}
     if (metaTitle) social.title = metaTitle
     if (metaDesc) social.description = metaDesc
@@ -53,10 +81,10 @@ export function AppForm({ initial, submitLabel, loading, onSubmit, onCancel }: A
       domain: domain || undefined,
       ios_bundle_id: iosBundle || undefined,
       ios_team_id: iosTeam || undefined,
-      ios_url_scheme: iosScheme || undefined,
+      ios_url_scheme: iosNorm || undefined,
       android_package: androidPkg || undefined,
       android_sha256_fingerprint: androidSha || undefined,
-      android_url_scheme: effectiveAndroidScheme || undefined,
+      android_url_scheme: androidNorm || undefined,
       app_store_url: appStoreUrl || undefined,
       play_store_url: playStoreUrl || undefined,
       social_meta: Object.keys(social).length ? social : undefined,
@@ -95,13 +123,16 @@ export function AppForm({ initial, submitLabel, loading, onSubmit, onCancel }: A
         />
       </div>
       <Input
-        label="iOS URL Scheme"
+        label={mode === 'create' ? 'iOS URL Scheme *' : 'iOS URL Scheme'}
         placeholder="bakcell"
         maxLength={64}
         value={iosScheme}
-        onChange={(e) => setIosScheme(e.target.value)}
-        error={schemeWarn(iosScheme)}
-        hint="e.g. bakcell — used as the Universal-Link fallback. Usually the same value on both platforms."
+        onChange={(e) => {
+          setIosScheme(e.target.value)
+          setIosSchemeErr(undefined)
+        }}
+        error={iosSchemeErr}
+        hint="e.g. bakcell — the app's URL scheme. Every deep link is built from it. Usually the same value on both platforms."
       />
       <Input
         label="App Store URL"
@@ -126,14 +157,17 @@ export function AppForm({ initial, submitLabel, loading, onSubmit, onCancel }: A
         hint="Comma-separated for multiple keys"
       />
       <Input
-        label="Android URL Scheme"
+        label={mode === 'create' ? 'Android URL Scheme *' : 'Android URL Scheme'}
         placeholder="bakcell"
         maxLength={64}
         value={effectiveAndroidScheme}
         disabled={sameScheme}
-        onChange={(e) => setAndroidScheme(e.target.value)}
-        error={sameScheme ? undefined : schemeWarn(androidScheme)}
-        hint="e.g. bakcell — used as the Universal-Link fallback. Usually the same value on both platforms."
+        onChange={(e) => {
+          setAndroidScheme(e.target.value)
+          setAndroidSchemeErr(undefined)
+        }}
+        error={sameScheme ? undefined : androidSchemeErr}
+        hint="e.g. bakcell — the app's URL scheme. Every deep link is built from it. Usually the same value on both platforms."
       />
       <label className="app-form__checkbox">
         <input
