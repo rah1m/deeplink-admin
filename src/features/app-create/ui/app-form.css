@@ -37,3 +37,18 @@
   gap: 8px;
   margin-top: 8px;
 }
+
+.app-form__sdk {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-form__sdk .ui-input {
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.app-form__sdk-actions {
+  display: flex;
+  gap: 8px;
+}

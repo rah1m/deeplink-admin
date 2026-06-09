@@ -17,6 +17,8 @@ export interface App {
   app_store_url?: string
   play_store_url?: string
   social_meta?: SocialMeta
+  /** Publishable SDK API key (dlpk_…), admin-only. Generated at app creation. */
+  sdk_api_key?: string
   created_at?: string
 }
 

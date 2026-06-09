@@ -1,16 +1,86 @@
 import { useState, type FormEvent } from 'react'
-import { Input, Textarea, Button } from '@shared/ui'
-import type { CreateAppInput, SocialMeta } from '@entities/app'
+import { Input, Textarea, Button, ConfirmDialog, useToast } from '@shared/ui'
+import {
+  useRegenerateSdkKey,
+  type App,
+  type CreateAppInput,
+  type SocialMeta,
+} from '@entities/app'
+import { copyToClipboard } from '@shared/lib'
+import { extractError } from '@shared/api'
 import './app-form.css'
 
 interface AppFormProps {
   /** create requires both URL schemes (SRE-0004); edit keeps them optional. */
   mode: 'create' | 'edit'
   initial?: Partial<CreateAppInput>
+  /** Full app record (edit mode) — powers read-only fields like the SDK API key. */
+  app?: App
   submitLabel: string
   loading?: boolean
   onSubmit: (input: CreateAppInput) => void
   onCancel?: () => void
+}
+
+/** Read-only publishable SDK key (dlpk_) with copy + regenerate. Edit mode only. */
+function SdkApiKeyField({ app }: { app: App }) {
+  const toast = useToast()
+  const regenerate = useRegenerateSdkKey(app.id)
+  const [key, setKey] = useState(app.sdk_api_key ?? '')
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
+  const onCopy = async () => {
+    await copyToClipboard(key)
+    toast.success('SDK API key copied')
+  }
+
+  const onConfirmRegenerate = () => {
+    regenerate.mutate(undefined, {
+      onSuccess: (res) => {
+        setKey(res.sdk_api_key)
+        setConfirmOpen(false)
+        toast.success('SDK API key regenerated')
+      },
+      onError: (err) => toast.error(extractError(err)),
+    })
+  }
+
+  return (
+    <div className="app-form__sdk">
+      <Input
+        label="SDK API Key"
+        readOnly
+        value={key || '—'}
+        onFocus={(e) => e.currentTarget.select()}
+        hint="Publishable key (dlpk_) the mobile SDK sends as X-Deeplink-Key. Not a secret — ships inside the app, like a Firebase key."
+      />
+      <div className="app-form__sdk-actions">
+        <Button type="button" variant="secondary" size="sm" onClick={onCopy} disabled={!key}>
+          Copy
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setConfirmOpen(true)}
+          loading={regenerate.isPending}
+        >
+          Regenerate
+        </Button>
+      </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Regenerate SDK API key?"
+        description="This invalidates the current key. Apps using it stop working until rebuilt with the new key."
+        confirmText="Regenerate key"
+        destructive
+        loading={regenerate.isPending}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={onConfirmRegenerate}
+      />
+    </div>
+  )
 }
 
 // RFC 3986 §3.1 — now server-enforced. Drop a pasted "bakcell://" separator and
@@ -21,7 +91,7 @@ function normalizeScheme(raw: string): string {
   return raw.trim().replace(/:\/\/.*$/, '').toLowerCase()
 }
 
-export function AppForm({ mode, initial, submitLabel, loading, onSubmit, onCancel }: AppFormProps) {
+export function AppForm({ mode, initial, app, submitLabel, loading, onSubmit, onCancel }: AppFormProps) {
   const [name, setName] = useState(initial?.name ?? '')
   const [domain, setDomain] = useState(initial?.domain ?? '')
   const [iosBundle, setIosBundle] = useState(initial?.ios_bundle_id ?? '')
@@ -201,6 +271,13 @@ export function AppForm({ mode, initial, submitLabel, loading, onSubmit, onCance
         value={metaImage}
         onChange={(e) => setMetaImage(e.target.value)}
       />
+
+      {mode === 'edit' && app && (
+        <>
+          <div className="app-form__section">SDK</div>
+          <SdkApiKeyField app={app} />
+        </>
+      )}
 
       <div className="app-form__actions">
         {onCancel && (

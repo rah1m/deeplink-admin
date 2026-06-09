@@ -164,6 +164,7 @@ export function AppsPage() {
           <AppForm
             mode="edit"
             initial={editing}
+            app={editing}
             submitLabel="Save"
             loading={update.isPending}
             onCancel={() => setEditing(null)}
