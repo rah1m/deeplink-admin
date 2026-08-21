@@ -62,8 +62,8 @@ export function LinksPage() {
   const links = useLinks(params);
   const create = useCreateLink();
 
-  const onCopy = async (shortCode: string) => {
-    await copyToClipboard(linkApi.shortUrl(shortCode));
+  const onCopy = async (link: DynamicLink) => {
+    await copyToClipboard(linkApi.shortUrl(link.short_code, link.app?.domain));
     toast.success("Short URL copied");
   };
 
@@ -158,7 +158,7 @@ export function LinksPage() {
           variant="ghost"
           onClick={(e) => {
             e.stopPropagation();
-            void onCopy(l.short_code);
+            void onCopy(l);
           }}
         >
           Copy

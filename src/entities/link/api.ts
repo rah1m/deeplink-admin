@@ -19,6 +19,14 @@ import type {
   UpdateLinkInput,
 } from './types'
 
+// A link is served from its app's own domain (e.g. "link.bakcell.com") so
+// Universal Link claims don't collide. Apps without one fall back to the API host.
+function linkOrigin(domain?: string | null): string {
+  const d = domain?.trim().replace(/\/+$/, '')
+  if (!d) return env.apiBaseUrl
+  return /^https?:\/\//i.test(d) ? d : `https://${d}`
+}
+
 export const linkApi = {
   list: (params: ListLinksParams = {}) =>
     http
@@ -60,9 +68,10 @@ export const linkApi = {
     http
       .get<FunnelResponse>(`/v1/admin/links/${shortCode}/funnel`, { params })
       .then((r) => r.data),
-  qrUrl: (shortCode: string, size = 256) =>
-    `${env.apiBaseUrl}/v1/links/${shortCode}/qr?size=${size}`,
-  shortUrl: (shortCode: string) => `${env.apiBaseUrl}/${shortCode}`,
+  qrUrl: (shortCode: string, size = 256, domain?: string | null) =>
+    `${linkOrigin(domain)}/v1/links/${shortCode}/qr?size=${size}`,
+  shortUrl: (shortCode: string, domain?: string | null) =>
+    `${linkOrigin(domain)}/${shortCode}`,
 }
 
 export const linkQueryKeys = {

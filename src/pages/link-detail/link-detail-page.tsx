@@ -87,8 +87,8 @@ export function LinkDetailPage() {
   }
 
   const data = link.data;
-  const shortUrl = linkApi.shortUrl(shortCode);
-  const qrUrl = linkApi.qrUrl(shortCode, 320);
+  const shortUrl = linkApi.shortUrl(shortCode, data.app?.domain);
+  const qrUrl = linkApi.qrUrl(shortCode, 320, data.app?.domain);
 
   const expired =
     data.expires_at != null && new Date(data.expires_at) < new Date();
