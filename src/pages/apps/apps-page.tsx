@@ -9,6 +9,7 @@ import {
   type Column,
 } from '@shared/ui'
 import { AppForm, useCreateApp } from '@features/app-create'
+import { DomainCheckModal } from '@features/app-domain-check'
 import { useUpdateApp } from '@features/app-edit'
 import { ServiceTokensManager } from '@features/service-tokens'
 import { useApps, type App } from '@entities/app'
@@ -24,6 +25,7 @@ export function AppsPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editing, setEditing] = useState<App | null>(null)
   const [tokensFor, setTokensFor] = useState<App | null>(null)
+  const [checking, setChecking] = useState<App | null>(null)
 
   const create = useCreateApp()
   const update = useUpdateApp(editing?.id ?? 0)
@@ -86,17 +88,23 @@ export function AppsPage() {
       header: '',
       align: 'right',
       width: '200px',
-      render: (a) =>
-        isSuper ? (
-          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-            <Button size="sm" variant="ghost" onClick={() => setTokensFor(a)}>
-              Tokens
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setEditing(a)}>
-              Edit
-            </Button>
-          </div>
-        ) : null,
+      render: (a) => (
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+          <Button size="sm" variant="ghost" onClick={() => setChecking(a)}>
+            Verify
+          </Button>
+          {isSuper && (
+            <>
+              <Button size="sm" variant="ghost" onClick={() => setTokensFor(a)}>
+                Tokens
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setEditing(a)}>
+                Edit
+              </Button>
+            </>
+          )}
+        </div>
+      ),
     },
   ]
 
@@ -180,6 +188,10 @@ export function AppsPage() {
           />
         )}
       </Modal>
+
+      {checking && (
+        <DomainCheckModal app={checking} onClose={() => setChecking(null)} />
+      )}
     </>
   )
 }
