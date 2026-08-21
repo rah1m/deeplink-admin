@@ -1,6 +1,7 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { linkApi, linkQueryKeys } from './api'
 import type {
+  FunnelParams,
   GroupBy,
   ListLinksParams,
   RevenueParams,
@@ -64,6 +65,20 @@ export function useLinkRevenue(
       ? linkQueryKeys.revenue(shortCode, params)
       : ['links', 'revenue', 'none'],
     queryFn: () => linkApi.revenue(shortCode!, params),
+    enabled: !!shortCode,
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useLinkFunnel(
+  shortCode: string | undefined,
+  params: FunnelParams = {},
+) {
+  return useQuery({
+    queryKey: shortCode
+      ? linkQueryKeys.funnel(shortCode, params)
+      : ['links', 'funnel', 'none'],
+    queryFn: () => linkApi.funnel(shortCode!, params),
     enabled: !!shortCode,
     placeholderData: keepPreviousData,
   })

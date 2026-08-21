@@ -175,3 +175,31 @@ export interface RevenueParams {
   currency?: string;
   days?: number;
 }
+
+export interface FunnelParams {
+  currency?: string;
+  days?: number;
+}
+
+export interface FunnelResponse {
+  currency: string;
+  /** Distinct visits per stage — not raw event counts like /stats. */
+  clicks: number;
+  installs: number;
+  opens: number;
+  conversions: number;
+  /** Visits that opened the app directly (no browser click row) — reported
+   * alongside the funnel, never inside it. `revenue + app_direct_revenue`
+   * reconciles with the /revenue endpoint's total. */
+  app_direct_opens: number;
+  app_direct_conversions: number;
+  app_direct_revenue: number;
+  /** Fractions (0..1), not percentages — multiply by 100 before rendering. */
+  install_rate: number;
+  open_rate: number;
+  conversion_rate: number;
+  revenue: number;
+  revenue_per_click: number;
+  /** Absent (not 0) when nothing converted — render "—", never "0 seconds". */
+  median_seconds_to_conversion?: number;
+}

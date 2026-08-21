@@ -58,6 +58,34 @@ export function EventsPage() {
       render: (e) => <code>#{e.link_id}</code>,
     },
     {
+      key: 'visit',
+      header: 'Visit',
+      width: '140px',
+      render: (e) =>
+        e.click_id ? (
+          <code style={{ fontSize: 11 }} title={e.click_id}>
+            {e.click_id.length > 12 ? `${e.click_id.slice(0, 12)}…` : e.click_id}
+          </code>
+        ) : (
+          <span style={{ color: 'var(--color-text-subtle)' }}>—</span>
+        ),
+    },
+    {
+      key: 'order',
+      header: 'Order id',
+      width: '140px',
+      render: (e) =>
+        e.idempotency_key ? (
+          <code style={{ fontSize: 11 }} title={e.idempotency_key}>
+            {e.idempotency_key.length > 14
+              ? `${e.idempotency_key.slice(0, 14)}…`
+              : e.idempotency_key}
+          </code>
+        ) : (
+          <span style={{ color: 'var(--color-text-subtle)' }}>—</span>
+        ),
+    },
+    {
       key: 'meta',
       header: 'Meta',
       render: (e) =>

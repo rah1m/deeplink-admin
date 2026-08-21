@@ -19,16 +19,32 @@ import { useCloneLink } from "@features/link-clone";
 import {
   linkApi,
   useLinkAdmin,
+  useLinkFunnel,
   useLinkRevenue,
   useLinkStats,
   useLinkTimeseries,
   type GroupBy,
   type TimeseriesBucketSize,
 } from "@entities/link";
-import { copyToClipboard, formatDate, formatNumber } from "@shared/lib";
+import {
+  copyToClipboard,
+  formatDate,
+  formatDuration,
+  formatNumber,
+} from "@shared/lib";
 import { extractError } from "@shared/api";
 import { TimeseriesChart } from "@pages/analytics/charts";
 import "./link-detail.css";
+
+/** Backend deploy of server-minted click ids — funnel windows reaching back
+ * before this date under-count clicks (legacy events carry no reference). */
+const CLICK_TRACKING_DEPLOY = new Date("2026-08-21T00:00:00Z");
+
+/** API rates are fractions (0.3 = 30%) — multiply, round to one decimal. */
+function formatRate(fraction: number | undefined | null) {
+  if (fraction == null) return "—";
+  return `${Math.round(fraction * 1000) / 10}%`;
+}
 
 function formatRevenue(value: number, currency: string) {
   try {
@@ -55,6 +71,8 @@ export function LinkDetailPage() {
   const [currency, setCurrency] = useState<string>("AZN");
   const timeseries = useLinkTimeseries(shortCode, { bucket, days });
   const revenue = useLinkRevenue(shortCode, { currency, days: 90 });
+  const [funnelDays, setFunnelDays] = useState<number>(30);
+  const funnel = useLinkFunnel(shortCode, { currency, days: funnelDays });
 
   const update = useUpdateLink(shortCode);
   const clone = useCloneLink(shortCode);
@@ -74,6 +92,27 @@ export function LinkDetailPage() {
 
   const expired =
     data.expires_at != null && new Date(data.expires_at) < new Date();
+
+  const f = funnel.data;
+  const funnelStages = f
+    ? [
+        { label: "Clicks", value: f.clicks, rate: null },
+        { label: "Installs", value: f.installs, rate: f.install_rate },
+        { label: "Opens", value: f.opens, rate: f.open_rate },
+        { label: "Conversions", value: f.conversions, rate: f.conversion_rate },
+      ]
+    : [];
+  const funnelEmpty =
+    !!f &&
+    f.clicks === 0 &&
+    f.installs === 0 &&
+    f.opens === 0 &&
+    f.conversions === 0 &&
+    f.app_direct_opens === 0;
+  const funnelWindowPredatesTracking =
+    new Date(Date.now() - funnelDays * 86_400_000) < CLICK_TRACKING_DEPLOY;
+  const hasAppDirect =
+    !!f && (f.app_direct_opens > 0 || f.app_direct_conversions > 0);
 
   const onCopy = async () => {
     await copyToClipboard(shortUrl);
@@ -358,6 +397,121 @@ export function LinkDetailPage() {
                 revenue
                 currency={revenue.data?.currency ?? currency}
               />
+            )}
+          </Card>
+
+          <Card
+            title="Funnel"
+            description="Distinct visits per stage — one person counted once, unlike the raw event counts above."
+            padding="none"
+            actions={
+              <Select
+                value={funnelDays}
+                onChange={(e) => setFunnelDays(Number(e.target.value))}
+                style={{ width: 140 }}
+              >
+                <option value={7}>Last 7 days</option>
+                <option value={14}>Last 14 days</option>
+                <option value={30}>Last 30 days</option>
+                <option value={90}>Last 90 days</option>
+              </Select>
+            }
+          >
+            {funnel.isLoading ? (
+              <div style={{ padding: 24 }}>
+                <CenteredSpinner />
+              </div>
+            ) : funnel.isError || !f ? (
+              <div className="lkd__empty">Couldn't load the funnel.</div>
+            ) : (
+              <>
+                {funnelWindowPredatesTracking && (
+                  <div className="lkd__funnel-note">
+                    This window starts before click-level tracking was deployed
+                    (21 Aug 2026). Funnel clicks can be lower than the Clicks
+                    stat above — earlier clicks can't be grouped into visits.
+                    This heals as the window moves past the deploy date.
+                  </div>
+                )}
+                {funnelEmpty ? (
+                  <div className="lkd__empty">
+                    No visits in this window yet.
+                  </div>
+                ) : (
+                  <div className="lkd__funnel">
+                    {funnelStages.map((stage) => (
+                      <div className="lkd__funnel-row" key={stage.label}>
+                        <span className="lkd__funnel-label">{stage.label}</span>
+                        <div className="lkd__funnel-track">
+                          <div
+                            className="lkd__funnel-bar"
+                            style={{
+                              width: `${
+                                f.clicks > 0
+                                  ? Math.min(
+                                      100,
+                                      (stage.value / f.clicks) * 100,
+                                    )
+                                  : 0
+                              }%`,
+                            }}
+                          />
+                        </div>
+                        <span className="lkd__funnel-value">
+                          {formatNumber(stage.value)}
+                          {stage.rate != null && (
+                            <span className="lkd__sub">
+                              {" "}
+                              · {formatRate(stage.rate)}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="lkd__rev-grid">
+                  <div className="lkd__rev-stat">
+                    <div className="lkd__rev-stat-label">Revenue</div>
+                    <div className="lkd__rev-stat-value">
+                      {formatRevenue(f.revenue ?? 0, f.currency)}
+                    </div>
+                  </div>
+                  <div className="lkd__rev-stat">
+                    <div className="lkd__rev-stat-label">Revenue / click</div>
+                    <div className="lkd__rev-stat-value">
+                      {formatRevenue(f.revenue_per_click ?? 0, f.currency)}
+                    </div>
+                  </div>
+                  <div className="lkd__rev-stat">
+                    <div className="lkd__rev-stat-label">
+                      Median time to conversion
+                    </div>
+                    <div className="lkd__rev-stat-value">
+                      {f.median_seconds_to_conversion != null
+                        ? formatDuration(f.median_seconds_to_conversion)
+                        : "—"}
+                    </div>
+                  </div>
+                </div>
+                {hasAppDirect && (
+                  <p className="lkd__funnel-direct">
+                    Plus {formatNumber(f.app_direct_opens)} visit
+                    {f.app_direct_opens === 1 ? "" : "s"} that opened the app
+                    directly
+                    {f.app_direct_conversions > 0 && (
+                      <>
+                        , {formatNumber(f.app_direct_conversions)} of which
+                        purchased (
+                        {formatRevenue(f.app_direct_revenue, f.currency)})
+                      </>
+                    )}
+                    . These have no browser click, so they sit outside the
+                    funnel bars; together with the funnel revenue they add up
+                    to the Revenue card's total.
+                  </p>
+                )}
+              </>
             )}
           </Card>
 

@@ -24,6 +24,8 @@ export type {
   RevenueBreakdown,
   RevenueBySource,
   RevenueParams,
+  FunnelParams,
+  FunnelResponse,
 } from './types'
 export { linkApi, linkQueryKeys } from './api'
 export {
@@ -33,4 +35,5 @@ export {
   useLinkStats,
   useLinkTimeseries,
   useLinkRevenue,
+  useLinkFunnel,
 } from './queries'

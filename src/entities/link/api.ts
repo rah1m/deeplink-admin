@@ -5,6 +5,8 @@ import type {
   CreateLinkInput,
   CreateLinkResponse,
   DynamicLink,
+  FunnelParams,
+  FunnelResponse,
   GroupBy,
   LinkStatsResponse,
   ListLinksParams,
@@ -54,6 +56,10 @@ export const linkApi = {
     http
       .get<RevenueBreakdown>(`/v1/admin/links/${shortCode}/revenue`, { params })
       .then((r) => r.data),
+  funnel: (shortCode: string, params: FunnelParams = {}) =>
+    http
+      .get<FunnelResponse>(`/v1/admin/links/${shortCode}/funnel`, { params })
+      .then((r) => r.data),
   qrUrl: (shortCode: string, size = 256) =>
     `${env.apiBaseUrl}/v1/links/${shortCode}/qr?size=${size}`,
   shortUrl: (shortCode: string) => `${env.apiBaseUrl}/${shortCode}`,
@@ -70,4 +76,6 @@ export const linkQueryKeys = {
     ['links', 'timeseries', shortCode, params] as const,
   revenue: (shortCode: string, params: RevenueParams) =>
     ['links', 'revenue', shortCode, params] as const,
+  funnel: (shortCode: string, params: FunnelParams) =>
+    ['links', 'funnel', shortCode, params] as const,
 }
