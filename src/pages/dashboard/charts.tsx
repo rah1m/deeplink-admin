@@ -8,6 +8,7 @@ const SERIES: { type: EventType; label: string; color: string }[] = [
   { type: "install", label: "Installs", color: "var(--color-success)" },
   { type: "conversion", label: "Conversions", color: "var(--color-primary)" },
   { type: "open", label: "Opens", color: "var(--color-warning)" },
+  { type: "preview", label: "Previews", color: "var(--color-text-subtle)" },
 ];
 
 function startOfDay(d: Date) {
@@ -37,6 +38,7 @@ export function EventsTimeline({ events, days = 14 }: EventsTimelineProps) {
         install: 0,
         open: 0,
         conversion: 0,
+        preview: 0,
       };
       return { ts, counts };
     });
@@ -48,7 +50,13 @@ export function EventsTimeline({ events, days = 14 }: EventsTimelineProps) {
       if (idx < 0 || idx >= buckets.length) continue;
       buckets[idx].counts[e.type] += 1;
     }
-    const types: EventType[] = ["click", "install", "conversion", "open"];
+    const types: EventType[] = [
+      "click",
+      "install",
+      "conversion",
+      "open",
+      "preview",
+    ];
     let max = 0;
     for (const b of buckets) {
       const total = types.reduce((s, t) => s + b.counts[t], 0);
@@ -207,6 +215,7 @@ export function EventTypeDonut({ events }: EventTypeDonutProps) {
       install: 0,
       open: 0,
       conversion: 0,
+      preview: 0,
     };
     for (const e of events) counts[e.type] += 1;
     const total = (Object.values(counts) as number[]).reduce(

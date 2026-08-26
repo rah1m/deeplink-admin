@@ -1,4 +1,4 @@
-export type EventType = 'click' | 'install' | 'open' | 'conversion'
+export type EventType = 'click' | 'install' | 'open' | 'conversion' | 'preview'
 
 export interface AnalyticsEvent {
   type: EventType
@@ -9,6 +9,10 @@ export interface AnalyticsEvent {
   /** The client's own order / transaction id, used for deduplication.
    * (Previously misnamed `click_id`.) */
   idempotency_key?: string
+  /** The browser that clicked — from a 90-day first-party cookie, so one
+   * person clicking five times shares a value. Absent when the browser
+   * refused the cookie or the row predates visitor tracking. */
+  visitor_id?: string
   fingerprint?: string
   meta?: Record<string, string>
   occurred_at: string

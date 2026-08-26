@@ -44,7 +44,9 @@ export function EventsPage() {
                 ? 'info'
                 : e.type === 'conversion'
                   ? 'primary'
-                  : 'neutral'
+                  : e.type === 'preview'
+                    ? 'warning'
+                    : 'neutral'
           }
         >
           {e.type}
@@ -56,6 +58,21 @@ export function EventsPage() {
       header: 'Link ID',
       width: '90px',
       render: (e) => <code>#{e.link_id}</code>,
+    },
+    {
+      key: 'person',
+      header: 'Person',
+      width: '140px',
+      render: (e) =>
+        e.visitor_id ? (
+          <code style={{ fontSize: 11 }} title={e.visitor_id}>
+            {e.visitor_id.length > 12
+              ? `${e.visitor_id.slice(0, 12)}…`
+              : e.visitor_id}
+          </code>
+        ) : (
+          <span style={{ color: 'var(--color-text-subtle)' }}>—</span>
+        ),
     },
     {
       key: 'visit',
@@ -147,6 +164,7 @@ export function EventsPage() {
               <option value="install">install</option>
               <option value="open">open</option>
               <option value="conversion">conversion</option>
+              <option value="preview">preview</option>
             </Select>
           </div>
           <div style={{ width: 200 }}>

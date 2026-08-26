@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   Badge,
@@ -202,6 +202,11 @@ export function LinkDetailPage() {
             <Stat
               label="Clicks"
               value={formatNumber(stats.data?.clicks)}
+              hint={
+                stats.data
+                  ? `${formatNumber(stats.data.previews ?? 0)} previews`
+                  : undefined
+              }
               tone="primary"
             />
             <Stat
@@ -402,7 +407,7 @@ export function LinkDetailPage() {
 
           <Card
             title="Funnel"
-            description="Distinct visits per stage — one person counted once, unlike the raw event counts above."
+            description="Distinct visits per stage — one visit counted once, however many events it produced."
             padding="none"
             actions={
               <Select
@@ -440,7 +445,8 @@ export function LinkDetailPage() {
                 ) : (
                   <div className="lkd__funnel">
                     {funnelStages.map((stage) => (
-                      <div className="lkd__funnel-row" key={stage.label}>
+                      <Fragment key={stage.label}>
+                      <div className="lkd__funnel-row">
                         <span className="lkd__funnel-label">{stage.label}</span>
                         <div className="lkd__funnel-track">
                           <div
@@ -467,6 +473,15 @@ export function LinkDetailPage() {
                           )}
                         </span>
                       </div>
+                      {stage.label === "Clicks" && f.unique_visitors > 0 && (
+                        <div className="lkd__funnel-visitors">
+                          from {formatNumber(f.unique_visitors)} visitor
+                          {f.unique_visitors === 1 ? "" : "s"} ·{" "}
+                          {Math.round(f.clicks_per_visitor * 100) / 100} clicks
+                          per visitor
+                        </div>
+                      )}
+                      </Fragment>
                     ))}
                   </div>
                 )}
@@ -503,7 +518,12 @@ export function LinkDetailPage() {
                       <>
                         , {formatNumber(f.app_direct_conversions)} of which
                         purchased (
-                        {formatRevenue(f.app_direct_revenue, f.currency)})
+                        {formatRevenue(f.app_direct_revenue, f.currency)}
+                        {f.app_direct_opens > 0 &&
+                          `, ${formatRate(
+                            f.app_direct_conversions / f.app_direct_opens,
+                          )} of direct opens`}
+                        )
                       </>
                     )}
                     . These have no browser click, so they sit outside the
@@ -639,6 +659,7 @@ export function LinkDetailPage() {
                     <th style={{ textAlign: "right" }}>Install</th>
                     <th style={{ textAlign: "right" }}>Open</th>
                     <th style={{ textAlign: "right" }}>Conversion</th>
+                    <th style={{ textAlign: "right" }}>Preview</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -658,6 +679,9 @@ export function LinkDetailPage() {
                       </td>
                       <td style={{ textAlign: "right" }}>
                         {formatNumber(v.conversion ?? 0)}
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        {formatNumber(v.preview ?? 0)}
                       </td>
                     </tr>
                   ))}

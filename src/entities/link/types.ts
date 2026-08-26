@@ -100,7 +100,12 @@ export type GroupBy =
   | "utm_term"
   | "utm_content";
 
-export type EventTypeKey = "click" | "install" | "open" | "conversion";
+export type EventTypeKey =
+  | "click"
+  | "install"
+  | "open"
+  | "conversion"
+  | "preview";
 
 export type EventTypeCounts = Partial<Record<EventTypeKey, number>>;
 
@@ -112,6 +117,9 @@ export interface LinkStatsResponse {
   installs: number;
   opens: number;
   conversions: number;
+  /** Link-preview fetches (messenger thumbnails) — not clicks, counted in
+   * nothing click-based. Read alongside clicks: "40 previews, 12 clicks". */
+  previews: number;
   by_type: EventTypeCounts;
   by_utm?: Record<string, EventTypeCounts>;
 }
@@ -185,6 +193,12 @@ export interface FunnelResponse {
   currency: string;
   /** Distinct visits per stage — not raw event counts like /stats. */
   clicks: number;
+  /** How many people those clicks came from — distinct visitor cookies.
+   * Lower than clicks for two reasons: repeat visitors AND clicks with no
+   * cookie at all, so the gap is not simply "repeat clicks". */
+  unique_visitors: number;
+  /** Average clicks per identified person; 0 when nobody was identified. */
+  clicks_per_visitor: number;
   installs: number;
   opens: number;
   conversions: number;
