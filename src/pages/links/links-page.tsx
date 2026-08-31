@@ -20,7 +20,7 @@ import {
   type LinkSourceFilter,
   linkApi,
 } from "@entities/link";
-import { useApps } from "@entities/app";
+import { useAllowedApps } from "@entities/app";
 import { formatDate, formatNumber, copyToClipboard, cn } from "@shared/lib";
 import { extractError } from "@shared/api";
 import "./links.css";
@@ -36,7 +36,7 @@ const SOURCE_TABS: { value: LinkSourceFilter; label: string }[] = [
 export function LinksPage() {
   const navigate = useNavigate();
   const toast = useToast();
-  const apps = useApps();
+  const apps = useAllowedApps();
   const [appId, setAppId] = useState<string>("");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");

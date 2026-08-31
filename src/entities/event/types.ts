@@ -19,6 +19,9 @@ export interface AnalyticsEvent {
 }
 
 export interface ListEventsParams {
+  /** Regular admins may only pass their own apps (403 otherwise). Combined
+   * with link_id it intersects rather than overrides. */
+  app_id?: number
   link_id?: number
   type?: EventType
   limit?: number

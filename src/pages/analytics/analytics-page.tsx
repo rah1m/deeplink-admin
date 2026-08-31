@@ -9,7 +9,7 @@ import {
   Spinner,
   Stat,
 } from '@shared/ui'
-import { useApps } from '@entities/app'
+import { useAllowedApps } from '@entities/app'
 import { useAppSummary } from '@entities/analytics'
 import { useLinks, useLinkTimeseries, type TimeseriesBucketSize } from '@entities/link'
 import { formatNumber } from '@shared/lib'
@@ -39,7 +39,7 @@ function formatRevenue(value: number, currency: string) {
 }
 
 export function AnalyticsPage() {
-  const apps = useApps()
+  const apps = useAllowedApps()
   const [appId, setAppId] = useState<number | null>(null)
   const [days, setDays] = useState<number>(30)
   const [currency, setCurrency] = useState('AZN')

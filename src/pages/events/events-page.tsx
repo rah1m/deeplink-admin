@@ -3,12 +3,15 @@ import {
   Badge,
   Card,
   DataTable,
+  EmptyState,
   Input,
   PageHeader,
   Pagination,
   Select,
   type Column,
 } from '@shared/ui'
+import { useAllowedApps } from '@entities/app'
+import { extractError } from '@shared/api'
 import {
   useEvents,
   type AnalyticsEvent,
@@ -19,6 +22,8 @@ import { formatDate } from '@shared/lib'
 const PAGE_SIZE = 50
 
 export function EventsPage() {
+  const apps = useAllowedApps()
+  const [appId, setAppId] = useState<string>('')
   const [type, setType] = useState<EventType | ''>('')
   const [linkId, setLinkId] = useState<string>('')
   const [offset, setOffset] = useState(0)
@@ -26,6 +31,7 @@ export function EventsPage() {
   const events = useEvents({
     limit: PAGE_SIZE,
     offset,
+    app_id: appId ? Number(appId) : undefined,
     type: type || undefined,
     link_id: linkId ? Number(linkId) : undefined,
   })
@@ -150,6 +156,23 @@ export function EventsPage() {
 
       <Card padding="md" style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ width: 220 }}>
+            <Select
+              label="App"
+              value={appId}
+              onChange={(e) => {
+                setAppId(e.target.value)
+                setOffset(0)
+              }}
+            >
+              <option value="">All my apps</option>
+              {apps.data?.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </Select>
+          </div>
           <div style={{ width: 200 }}>
             <Select
               label="Type"
@@ -182,13 +205,22 @@ export function EventsPage() {
         </div>
       </Card>
 
-      <DataTable
-        columns={columns}
-        rows={events.data?.items}
-        rowKey={(e) => `${e.link_id}-${e.occurred_at}-${e.type}`}
-        loading={events.isLoading}
-        empty="No events match this filter"
-      />
+      {events.isError ? (
+        <Card padding="md">
+          <EmptyState
+            title="Couldn't load events"
+            description={extractError(events.error)}
+          />
+        </Card>
+      ) : (
+        <DataTable
+          columns={columns}
+          rows={events.data?.items}
+          rowKey={(e) => `${e.link_id}-${e.occurred_at}-${e.type}`}
+          loading={events.isLoading}
+          empty="No events match this filter"
+        />
+      )}
 
       {events.data && events.data.total > 0 && (
         <Pagination
