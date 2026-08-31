@@ -204,7 +204,7 @@ export function LinkDetailPage() {
               value={formatNumber(stats.data?.clicks)}
               hint={
                 stats.data
-                  ? `${formatNumber(stats.data.previews ?? 0)} previews`
+                  ? `${formatNumber(stats.data.previews ?? 0)} previews · all time`
                   : undefined
               }
               tone="primary"
@@ -212,16 +212,19 @@ export function LinkDetailPage() {
             <Stat
               label="Installs"
               value={formatNumber(stats.data?.installs)}
+              hint="all time"
               tone="success"
             />
             <Stat
               label="Opens"
               value={formatNumber(stats.data?.opens)}
+              hint="all time"
               tone="neutral"
             />
             <Stat
               label="Conversions"
               value={formatNumber(stats.data?.conversions)}
+              hint="all time"
               tone="warning"
             />
           </div>

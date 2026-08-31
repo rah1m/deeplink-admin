@@ -44,12 +44,13 @@ export function DashboardPage() {
         <Stat
           label="Recent clicks"
           value={formatNumber(totalClicks)}
-          hint="Top 5 links"
+          hint="Top 5 links · last 30 days"
           tone="success"
         />
         <Stat
           label="Recent installs / conv."
           value={`${formatNumber(totalInstalls)} / ${formatNumber(totalConversions)}`}
+          hint="Top 5 links · last 30 days"
           tone="warning"
         />
       </div>
@@ -76,7 +77,7 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      <Card title="Top links by clicks" description="Highest-traffic short codes" className="dash__top-links">
+      <Card title="Top links by clicks" description="Highest-traffic short codes · last 30 days" className="dash__top-links">
         {topLinks.isLoading ? (
           <div style={{ padding: 24 }}>
             <Spinner />

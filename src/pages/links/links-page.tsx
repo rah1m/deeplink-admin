@@ -124,7 +124,7 @@ export function LinksPage() {
     },
     {
       key: "clicks",
-      header: "Clicks",
+      header: "Clicks (30d)",
       width: "90px",
       align: "right",
       render: (l) => formatNumber(l.stats?.clicks),
@@ -132,7 +132,7 @@ export function LinksPage() {
 
     {
       key: "installs",
-      header: "Installs",
+      header: "Installs (30d)",
       width: "90px",
       align: "right",
       render: (l) => formatNumber(l.stats?.installs),
