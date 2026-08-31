@@ -13,7 +13,7 @@
 
 .lkd__stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
 }
 
@@ -190,5 +190,21 @@
 .lkd__funnel-visitors {
   margin: -4px 0 0 112px;
   font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.lkd__period {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.lkd__period-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
   color: var(--color-text-muted);
 }

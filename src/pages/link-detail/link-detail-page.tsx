@@ -67,11 +67,14 @@ export function LinkDetailPage() {
   const [groupBy, setGroupBy] = useState<GroupBy | "">("");
   const stats = useLinkStats(shortCode, groupBy || undefined);
   const [bucket, setBucket] = useState<TimeseriesBucketSize>("day");
+  // One page-level window, sent explicitly to every period-aware endpoint —
+  // their server-side defaults disagree (/revenue 90, the rest 30).
   const [days, setDays] = useState<number>(30);
+  // /funnel rejects days > 60, so the widest page window clamps to its max.
+  const funnelDays = Math.min(days, 60);
   const [currency, setCurrency] = useState<string>("AZN");
   const timeseries = useLinkTimeseries(shortCode, { bucket, days });
-  const revenue = useLinkRevenue(shortCode, { currency, days: 90 });
-  const [funnelDays, setFunnelDays] = useState<number>(30);
+  const revenue = useLinkRevenue(shortCode, { currency, days });
   const funnel = useLinkFunnel(shortCode, { currency, days: funnelDays });
 
   const update = useUpdateLink(shortCode);
@@ -113,6 +116,24 @@ export function LinkDetailPage() {
     new Date(Date.now() - funnelDays * 86_400_000) < CLICK_TRACKING_DEPLOY;
   const hasAppDirect =
     !!f && (f.app_direct_opens > 0 || f.app_direct_conversions > 0);
+
+  const onPeriodChange = (n: number) => {
+    setDays(n);
+    setBucket(n >= 90 ? "week" : "day");
+  };
+
+  // The stat row follows the selected window. /stats can't (all-time only),
+  // but the timeseries the Trend chart already fetches carries every counter
+  // for the window — summing its buckets costs no extra request.
+  const totals = (timeseries.data?.series ?? []).reduce(
+    (acc, b) => ({
+      clicks: acc.clicks + b.clicks,
+      installs: acc.installs + b.installs,
+      opens: acc.opens + b.opens,
+      conversions: acc.conversions + b.conversions,
+    }),
+    { clicks: 0, installs: 0, opens: 0, conversions: 0 },
+  );
 
   const onCopy = async () => {
     await copyToClipboard(shortUrl);
@@ -196,36 +217,52 @@ export function LinkDetailPage() {
         }
       />
 
+      <div className="lkd__period">
+        <span className="lkd__period-label">Period</span>
+        <Select
+          value={days}
+          onChange={(e) => onPeriodChange(Number(e.target.value))}
+          style={{ width: 150 }}
+        >
+          <option value={7}>Last 7 days</option>
+          <option value={14}>Last 14 days</option>
+          <option value={30}>Last 30 days</option>
+          <option value={90}>Last 90 days</option>
+        </Select>
+      </div>
+
       <div className="lkd__grid">
         <div className="lkd__col">
           <div className="lkd__stats">
             <Stat
               label="Clicks"
-              value={formatNumber(stats.data?.clicks)}
-              hint={
-                stats.data
-                  ? `${formatNumber(stats.data.previews ?? 0)} previews · all time`
-                  : undefined
-              }
+              value={formatNumber(totals.clicks)}
+              hint={`last ${days} days`}
               tone="primary"
             />
             <Stat
               label="Installs"
-              value={formatNumber(stats.data?.installs)}
-              hint="all time"
+              value={formatNumber(totals.installs)}
+              hint={`last ${days} days`}
               tone="success"
             />
             <Stat
               label="Opens"
-              value={formatNumber(stats.data?.opens)}
-              hint="all time"
+              value={formatNumber(totals.opens)}
+              hint={`last ${days} days`}
               tone="neutral"
             />
             <Stat
               label="Conversions"
-              value={formatNumber(stats.data?.conversions)}
-              hint="all time"
+              value={formatNumber(totals.conversions)}
+              hint={`last ${days} days`}
               tone="warning"
+            />
+            <Stat
+              label="Previews"
+              value={formatNumber(stats.data?.previews)}
+              hint="all time"
+              tone="neutral"
             />
           </div>
 
@@ -366,32 +403,20 @@ export function LinkDetailPage() {
 
           <Card
             title="Trend"
-            description="Bucketed clicks / installs / conversions with revenue overlay."
+            description={`Bucketed clicks / installs / conversions with revenue overlay · last ${days} days`}
             padding="none"
             actions={
-              <div style={{ display: "flex", gap: 8 }}>
-                <Select
-                  value={bucket}
-                  onChange={(e) =>
-                    setBucket(e.target.value as TimeseriesBucketSize)
-                  }
-                  style={{ width: 110 }}
-                >
-                  <option value="hour">hour</option>
-                  <option value="day">day</option>
-                  <option value="week">week</option>
-                </Select>
-                <Select
-                  value={days}
-                  onChange={(e) => setDays(Number(e.target.value))}
-                  style={{ width: 140 }}
-                >
-                  <option value={7}>Last 7 days</option>
-                  <option value={14}>Last 14 days</option>
-                  <option value={30}>Last 30 days</option>
-                  <option value={90}>Last 90 days</option>
-                </Select>
-              </div>
+              <Select
+                value={bucket}
+                onChange={(e) =>
+                  setBucket(e.target.value as TimeseriesBucketSize)
+                }
+                style={{ width: 110 }}
+              >
+                <option value="hour">hour</option>
+                <option value="day">day</option>
+                <option value="week">week</option>
+              </Select>
             }
           >
             {timeseries.isLoading ? (
@@ -413,16 +438,10 @@ export function LinkDetailPage() {
             description="Distinct visits per stage — one visit counted once, however many events it produced."
             padding="none"
             actions={
-              <Select
-                value={funnelDays}
-                onChange={(e) => setFunnelDays(Number(e.target.value))}
-                style={{ width: 140 }}
-              >
-                <option value={7}>Last 7 days</option>
-                <option value={14}>Last 14 days</option>
-                <option value={30}>Last 30 days</option>
-                <option value={90}>Last 90 days</option>
-              </Select>
+              <span className="lkd__sub">
+                last {funnelDays} days
+                {funnelDays !== days && " (funnel max)"}
+              </span>
             }
           >
             {funnel.isLoading ? (
@@ -540,7 +559,7 @@ export function LinkDetailPage() {
 
           <Card
             title="Revenue"
-            description={`Conversions tagged with meta.revenue · last 90 days · ${revenue.data?.currency ?? currency}`}
+            description={`Conversions tagged with meta.revenue · last ${days} days · ${revenue.data?.currency ?? currency}`}
             padding="none"
             actions={
               <Input
@@ -630,6 +649,7 @@ export function LinkDetailPage() {
 
           <Card
             title="Stats by UTM"
+            description="All time"
             actions={
               <Select
                 value={groupBy}
