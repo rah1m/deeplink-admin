@@ -14,7 +14,9 @@ export interface AnalyticsEvent {
    * refused the cookie or the row predates visitor tracking. */
   visitor_id?: string
   fingerprint?: string
-  meta?: Record<string, string>
+  /** Free-form key→value; values may be string, number, or boolean
+   * (e.g. app_direct: true, revenue: 49.9) — never assume string. */
+  meta?: Record<string, string | number | boolean>
   occurred_at: string
 }
 

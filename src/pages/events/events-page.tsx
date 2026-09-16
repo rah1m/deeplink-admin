@@ -116,7 +116,7 @@ export function EventsPage() {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             {Object.entries(e.meta).map(([k, v]) => (
               <Badge key={k} tone="neutral">
-                {k}={v as string}
+                {k}={String(v)}
               </Badge>
             ))}
           </div>
