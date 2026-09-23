@@ -65,7 +65,6 @@ export function LinkDetailPage() {
 
   const link = useLinkAdmin(shortCode);
   const [groupBy, setGroupBy] = useState<GroupBy | "">("");
-  const stats = useLinkStats(shortCode, groupBy || undefined);
   const [bucket, setBucket] = useState<TimeseriesBucketSize>("day");
   // One page-level window, sent explicitly to every period-aware endpoint —
   // their server-side defaults disagree (/revenue 90, the rest 30).
@@ -74,6 +73,7 @@ export function LinkDetailPage() {
   const funnelDays = Math.min(days, 60);
   const [currency, setCurrency] = useState<string>("AZN");
   const timeseries = useLinkTimeseries(shortCode, { bucket, days });
+  const stats = useLinkStats(shortCode, groupBy || undefined, days);
   const revenue = useLinkRevenue(shortCode, { currency, days });
   const funnel = useLinkFunnel(shortCode, { currency, days: funnelDays });
 
@@ -122,18 +122,14 @@ export function LinkDetailPage() {
     setBucket(n >= 90 ? "week" : "day");
   };
 
-  // The stat row follows the selected window. /stats can't (all-time only),
-  // but the timeseries the Trend chart already fetches carries every counter
-  // for the window — summing its buckets costs no extra request.
-  const totals = (timeseries.data?.series ?? []).reduce(
-    (acc, b) => ({
-      clicks: acc.clicks + b.clicks,
-      installs: acc.installs + b.installs,
-      opens: acc.opens + b.opens,
-      conversions: acc.conversions + b.conversions,
-    }),
-    { clicks: 0, installs: 0, opens: 0, conversions: 0 },
-  );
+  // Labelled from the window the server echoes, not the one requested: it
+  // stays in step with the figures while a new window loads, and reads
+  // "all time" if the backend ignored `days`.
+  const statsWindow = !stats.data
+    ? undefined
+    : stats.data.days != null
+      ? `last ${stats.data.days} days`
+      : "all time";
 
   const onCopy = async () => {
     await copyToClipboard(shortUrl);
@@ -236,32 +232,32 @@ export function LinkDetailPage() {
           <div className="lkd__stats">
             <Stat
               label="Clicks"
-              value={formatNumber(totals.clicks)}
-              hint={`last ${days} days`}
+              value={formatNumber(stats.data?.clicks)}
+              hint={statsWindow}
               tone="primary"
             />
             <Stat
               label="Installs"
-              value={formatNumber(totals.installs)}
-              hint={`last ${days} days`}
+              value={formatNumber(stats.data?.installs)}
+              hint={statsWindow}
               tone="success"
             />
             <Stat
               label="Opens"
-              value={formatNumber(totals.opens)}
-              hint={`last ${days} days`}
+              value={formatNumber(stats.data?.opens)}
+              hint={statsWindow}
               tone="neutral"
             />
             <Stat
               label="Conversions"
-              value={formatNumber(totals.conversions)}
-              hint={`last ${days} days`}
+              value={formatNumber(stats.data?.conversions)}
+              hint={statsWindow}
               tone="warning"
             />
             <Stat
               label="Previews"
               value={formatNumber(stats.data?.previews)}
-              hint="all time"
+              hint={statsWindow}
               tone="neutral"
             />
           </div>
@@ -649,7 +645,9 @@ export function LinkDetailPage() {
 
           <Card
             title="Stats by UTM"
-            description="All time"
+            description={
+              statsWindow && `Event counts per UTM value · ${statsWindow}`
+            }
             actions={
               <Select
                 value={groupBy}
@@ -669,6 +667,10 @@ export function LinkDetailPage() {
             {!groupBy ? (
               <div className="lkd__empty">
                 Pick a UTM dimension to break down events.
+              </div>
+            ) : stats.isLoading || stats.isPlaceholderData ? (
+              <div style={{ padding: 24 }}>
+                <CenteredSpinner />
               </div>
             ) : !stats.data?.by_utm ||
               Object.keys(stats.data.by_utm).length === 0 ? (

@@ -32,13 +32,18 @@ export function useLinkAdmin(shortCode: string | undefined) {
   })
 }
 
-export function useLinkStats(shortCode: string | undefined, groupBy?: GroupBy) {
+export function useLinkStats(
+  shortCode: string | undefined,
+  groupBy?: GroupBy,
+  days?: number,
+) {
   return useQuery({
     queryKey: shortCode
-      ? linkQueryKeys.stats(shortCode, groupBy)
+      ? linkQueryKeys.stats(shortCode, groupBy, days)
       : ['links', 'stats', 'none'],
-    queryFn: () => linkApi.stats(shortCode!, groupBy),
+    queryFn: () => linkApi.stats(shortCode!, groupBy, days),
     enabled: !!shortCode,
+    placeholderData: keepPreviousData,
   })
 }
 

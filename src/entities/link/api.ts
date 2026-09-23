@@ -48,10 +48,10 @@ export const linkApi = {
       .then((r) => r.data),
   remove: (shortCode: string) =>
     http.delete<void>(`/v1/admin/links/${shortCode}`).then((r) => r.data),
-  stats: (shortCode: string, groupBy?: GroupBy) =>
+  stats: (shortCode: string, groupBy?: GroupBy, days?: number) =>
     http
       .get<LinkStatsResponse>(`/v1/admin/links/${shortCode}/stats`, {
-        params: groupBy ? { group_by: groupBy } : undefined,
+        params: { group_by: groupBy, days },
       })
       .then((r) => r.data),
   timeseries: (shortCode: string, params: TimeseriesParams = {}) =>
@@ -79,8 +79,8 @@ export const linkQueryKeys = {
   list: (params: ListLinksParams) => ['links', 'list', params] as const,
   detail: (shortCode: string) => ['links', 'detail', shortCode] as const,
   admin: (shortCode: string) => ['links', 'admin', shortCode] as const,
-  stats: (shortCode: string, groupBy?: GroupBy) =>
-    ['links', 'stats', shortCode, groupBy ?? 'all'] as const,
+  stats: (shortCode: string, groupBy?: GroupBy, days?: number) =>
+    ['links', 'stats', shortCode, groupBy ?? 'all', days ?? null] as const,
   timeseries: (shortCode: string, params: TimeseriesParams) =>
     ['links', 'timeseries', shortCode, params] as const,
   revenue: (shortCode: string, params: RevenueParams) =>

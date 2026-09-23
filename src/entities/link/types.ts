@@ -113,6 +113,9 @@ export interface LinkStatsResponse {
   short_code: string;
   link_id: number;
   deep_link: string;
+  /** The window the figures cover, echoed from the request's `days`.
+   * Absent means all time. */
+  days?: number;
   clicks: number;
   installs: number;
   opens: number;
