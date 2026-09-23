@@ -21,6 +21,8 @@ export interface LinkAuthor {
 
 export type LinkSource = "admin" | "service";
 
+export type FallbackSource = "custom" | "app_default" | "none";
+
 export type LinkSourceFilter = LinkSource | "all";
 
 export interface LinkServiceTokenRef {
@@ -34,7 +36,14 @@ export interface DynamicLink {
   name?: string | null;
   app_id?: number | null;
   deep_link: string;
+  /** Stored value — empty when the link follows its app's default. Send it
+   * back empty on update to keep it that way; sending the effective URL would
+   * pin today's default into the link. */
   fallback_url?: string;
+  /** Where a click the app can't open actually goes: fallback_url, or the
+   * app's default_fallback_url when that is empty. Read-only. */
+  effective_fallback_url: string;
+  fallback_source: FallbackSource;
   is_active: boolean;
   expires_at: string | null;
   created_at: string;
@@ -68,7 +77,8 @@ export interface CreateLinkInput {
   app_id?: number;
   name?: string;
   deep_link: string;
-  fallback_url: string;
+  /** Omit or "" to follow the app's default_fallback_url. */
+  fallback_url?: string;
   expires_at?: string | null;
   social_meta?: SocialMeta;
   utm_params?: UtmParams;
@@ -78,6 +88,7 @@ export interface CreateLinkInput {
 export interface UpdateLinkInput {
   name?: string;
   deep_link?: string;
+  /** "" puts the link back on the app default. */
   fallback_url?: string;
   expires_at?: string | null;
   is_active?: boolean;

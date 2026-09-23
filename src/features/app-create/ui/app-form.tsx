@@ -6,7 +6,7 @@ import {
   type CreateAppInput,
   type SocialMeta,
 } from '@entities/app'
-import { copyToClipboard } from '@shared/lib'
+import { copyToClipboard, httpUrlError } from '@shared/lib'
 import { extractError } from '@shared/api'
 import './app-form.css'
 
@@ -102,6 +102,8 @@ export function AppForm({ mode, initial, app, submitLabel, loading, onSubmit, on
   const [androidScheme, setAndroidScheme] = useState(initial?.android_url_scheme ?? '')
   const [appStoreUrl, setAppStoreUrl] = useState(initial?.app_store_url ?? '')
   const [playStoreUrl, setPlayStoreUrl] = useState(initial?.play_store_url ?? '')
+  const [defaultFallback, setDefaultFallback] = useState(initial?.default_fallback_url ?? '')
+  const [defaultFallbackErr, setDefaultFallbackErr] = useState<string>()
 
   // "Same as iOS" reflects the common case (95% of apps share the scheme).
   // Start checked only when both schemes already match, to keep edits honest.
@@ -139,7 +141,11 @@ export function AppForm({ mode, initial, app, submitLabel, loading, onSubmit, on
     const androidErr = sameScheme ? iosErr : validate(androidNorm)
     setIosSchemeErr(iosErr)
     setAndroidSchemeErr(sameScheme ? undefined : androidErr)
-    if (iosErr || androidErr) return
+
+    const fallbackNorm = defaultFallback.trim()
+    const fallbackErr = fallbackNorm ? httpUrlError(fallbackNorm) : undefined
+    setDefaultFallbackErr(fallbackErr)
+    if (iosErr || androidErr || fallbackErr) return
 
     const social: SocialMeta = {}
     if (metaTitle) social.title = metaTitle
@@ -158,6 +164,10 @@ export function AppForm({ mode, initial, app, submitLabel, loading, onSubmit, on
       app_store_url: appStoreUrl || undefined,
       play_store_url: playStoreUrl || undefined,
       social_meta: Object.keys(social).length ? social : undefined,
+      // "" removes the default on update, so it can't use the omit-when-empty
+      // rule above — it is sent only when it changed.
+      default_fallback_url:
+        fallbackNorm !== (initial?.default_fallback_url ?? '') ? fallbackNorm : undefined,
     })
   }
 
@@ -175,6 +185,18 @@ export function AppForm({ mode, initial, app, submitLabel, loading, onSubmit, on
         value={domain}
         onChange={(e) => setDomain(e.target.value)}
         hint="Per-app subdomain that serves AASA / assetlinks. Required for multi-app setups to avoid Universal Link claim collisions."
+      />
+      <Input
+        label="Default fallback URL"
+        type="url"
+        placeholder="https://www.example.com"
+        value={defaultFallback}
+        onChange={(e) => {
+          setDefaultFallback(e.target.value)
+          setDefaultFallbackErr(undefined)
+        }}
+        error={defaultFallbackErr}
+        hint="Where this app's links send clicks the app can't open (desktop, or no store URL) unless a link sets its own. Links on the default follow changes immediately. Leave empty for no default."
       />
 
       <div className="app-form__section">iOS</div>

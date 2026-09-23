@@ -3,6 +3,7 @@ export type {
   LinkAuthor,
   LinkServiceTokenRef,
   LinkSource,
+  FallbackSource,
   LinkSourceFilter,
   LinkStats,
   ListLinksParams,

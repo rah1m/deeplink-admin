@@ -17,6 +17,9 @@ export interface App {
   app_store_url?: string
   play_store_url?: string
   social_meta?: SocialMeta
+  /** Where this app's links send clicks the app can't open, when a link sets
+   * no fallback of its own. Read at resolve time. Empty = no default. */
+  default_fallback_url?: string
   /** Publishable SDK API key (dlpk_…), admin-only. Generated at app creation. */
   sdk_api_key?: string
   created_at?: string
@@ -34,6 +37,8 @@ export interface CreateAppInput {
   app_store_url?: string
   play_store_url?: string
   social_meta?: SocialMeta
+  /** On update, "" removes the default and omitting leaves it unchanged. */
+  default_fallback_url?: string
 }
 
 export type UpdateAppInput = Partial<CreateAppInput>

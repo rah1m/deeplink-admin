@@ -43,6 +43,16 @@ export function AppsPage() {
         a.domain ? <code>{a.domain}</code> : <span style={{ color: 'var(--color-text-subtle)' }}>—</span>,
     },
     {
+      key: 'fallback',
+      header: 'Default fallback',
+      render: (a) =>
+        a.default_fallback_url ? (
+          <code>{a.default_fallback_url}</code>
+        ) : (
+          <span style={{ color: 'var(--color-text-subtle)' }}>—</span>
+        ),
+    },
+    {
       key: 'ios',
       header: 'iOS bundle',
       render: (a) =>

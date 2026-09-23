@@ -1,9 +1,9 @@
-import { useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import { Input, Textarea, Select, Button } from '@shared/ui'
 import { useApps, type App } from '@entities/app'
 import type { CreateLinkInput, UtmParams } from '@entities/link'
 import type { SocialMeta } from '@entities/app'
-import { cn } from '@shared/lib'
+import { cn, httpUrlError } from '@shared/lib'
 import './link-form.css'
 
 interface LinkFormProps {
@@ -29,7 +29,13 @@ export function LinkForm({
   const [appId, setAppId] = useState<string>(initial?.app_id?.toString() ?? '')
   const [name, setName] = useState(initial?.name ?? '')
   const [deepLink, setDeepLink] = useState(initial?.deep_link ?? '')
+  // A link with no stored fallback follows its app's default.
+  const [fallbackMode, setFallbackMode] = useState<'app' | 'custom'>(
+    initial?.fallback_url ? 'custom' : 'app',
+  )
   const [fallbackUrl, setFallbackUrl] = useState(initial?.fallback_url ?? '')
+  const [fallbackError, setFallbackError] = useState<string>()
+  const fallbackRadio = useId()
   const [expiresAt, setExpiresAt] = useState(initial?.expires_at ?? '')
 
   const meta = initial?.social_meta ?? {}
@@ -61,6 +67,7 @@ export function LinkForm({
   const singlePrefix = schemesDiffer ? undefined : iosScheme ?? androidScheme
   // Live preview of what the server composes per platform.
   const previewPath = deepLink.trim().replace(/^\/+/, '') || 'product/123'
+  const appFallback = selectedApp?.default_fallback_url
 
   const handle = (e: FormEvent) => {
     e.preventDefault()
@@ -78,6 +85,18 @@ export function LinkForm({
       return
     }
     setDeepLinkError(undefined)
+
+    const customFallback = fallbackUrl.trim()
+    if (fallbackMode === 'custom') {
+      const err = customFallback
+        ? httpUrlError(customFallback)
+        : 'Enter a URL, or use the app default'
+      if (err) {
+        setFallbackError(err)
+        return
+      }
+    }
+    setFallbackError(undefined)
 
     let payload: Record<string, unknown> | undefined
     if (payloadText.trim()) {
@@ -107,7 +126,7 @@ export function LinkForm({
       app_id: appId ? Number(appId) : undefined,
       name: name || undefined,
       deep_link: deepLinkPath,
-      fallback_url: fallbackUrl,
+      fallback_url: fallbackMode === 'custom' ? customFallback : '',
       expires_at: expiresAt || undefined,
       social_meta: Object.keys(social).length ? social : undefined,
       utm_params: Object.keys(utmOut).length ? utmOut : undefined,
@@ -202,14 +221,68 @@ export function LinkForm({
           </div>
         )}
       </div>
-      <Input
-        label="Fallback URL *"
-        required
-        type="url"
-        placeholder="https://example.com/landing"
-        value={fallbackUrl}
-        onChange={(e) => setFallbackUrl(e.target.value)}
-      />
+      <div className="ui-field">
+        <span className="ui-field__label">Fallback URL</span>
+        <div className="link-form__choice">
+          <label className="link-form__radio">
+            <input
+              type="radio"
+              name={fallbackRadio}
+              checked={fallbackMode === 'app'}
+              onChange={() => {
+                setFallbackMode('app')
+                setFallbackError(undefined)
+              }}
+            />
+            App default
+            {appFallback && <code>{appFallback}</code>}
+          </label>
+          <label className="link-form__radio">
+            <input
+              type="radio"
+              name={fallbackRadio}
+              checked={fallbackMode === 'custom'}
+              onChange={() => setFallbackMode('custom')}
+            />
+            Custom URL
+          </label>
+        </div>
+        {fallbackMode === 'custom' ? (
+          <>
+            <Input
+              type="url"
+              aria-label="Custom fallback URL"
+              placeholder="https://example.com/landing"
+              value={fallbackUrl}
+              onChange={(e) => {
+                setFallbackUrl(e.target.value)
+                setFallbackError(undefined)
+              }}
+              error={fallbackError}
+            />
+            {!fallbackError && (
+              <span className="ui-field__hint">
+                This link only — changes to the app default won't affect it.
+              </span>
+            )}
+          </>
+        ) : !selectedApp ? (
+          <span className="ui-field__hint">
+            Select an app to use its default.
+          </span>
+        ) : appFallback ? (
+          <span className="ui-field__hint">
+            Where clicks the app can't open go (desktop, or no store URL). The
+            link follows the app default if it changes later.
+          </span>
+        ) : (
+          <span className="link-form__warn">
+            {selectedApp.name} has no default fallback URL — desktop clicks
+            will land on the domain root. Set one on the Apps page, or use a
+            custom URL.
+          </span>
+        )}
+      </div>
       <Input
         label="Expires at"
         type="datetime-local"

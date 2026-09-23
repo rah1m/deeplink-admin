@@ -283,20 +283,34 @@ export function LinkDetailPage() {
                 <code>{data.deep_link}</code>
               </dd>
 
-              {data.fallback_url && (
-                <>
-                  <dt>Fallback URL</dt>
-                  <dd>
-                    <a
-                      href={data.fallback_url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {data.fallback_url}
-                    </a>
-                  </dd>
-                </>
-              )}
+              <dt>Fallback URL</dt>
+              <dd>
+                {data.effective_fallback_url ? (
+                  <a
+                    href={data.effective_fallback_url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {data.effective_fallback_url}
+                  </a>
+                ) : (
+                  <span className="lkd__sub">
+                    None — desktop clicks land on the domain root
+                  </span>
+                )}
+                {data.fallback_source === "app_default" && (
+                  <>
+                    {" "}
+                    <Badge tone="info">App default</Badge>
+                  </>
+                )}
+                {data.fallback_source === "custom" && (
+                  <>
+                    {" "}
+                    <Badge tone="neutral">Custom</Badge>
+                  </>
+                )}
+              </dd>
 
               {data.app && (
                 <>
