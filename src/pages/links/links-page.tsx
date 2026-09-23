@@ -138,6 +138,13 @@ export function LinksPage() {
       render: (l) => formatNumber(l.stats?.installs),
     },
     {
+      key: "opens",
+      header: "Opens (30d)",
+      width: "90px",
+      align: "right",
+      render: (l) => formatNumber(l.stats?.opens),
+    },
+    {
       key: "created",
       header: "Created",
       width: "160px",
