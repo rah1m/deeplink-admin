@@ -1,6 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
 import { Input, Textarea, Select, Button } from '@shared/ui'
-import { useApps, type App } from '@entities/app'
+import { useAllowedApps, type App } from '@entities/app'
 import type { CreateLinkInput, UtmParams } from '@entities/link'
 import type { SocialMeta } from '@entities/app'
 import { cn, httpUrlError } from '@shared/lib'
@@ -13,6 +13,8 @@ interface LinkFormProps {
   onSubmit: (input: CreateLinkInput) => void
   onCancel?: () => void
   lockShortCode?: boolean
+  /** Updates can't move a link to another app, so edit mode shows it read-only. */
+  lockApp?: boolean
 }
 
 export function LinkForm({
@@ -22,8 +24,9 @@ export function LinkForm({
   onSubmit,
   onCancel,
   lockShortCode,
+  lockApp,
 }: LinkFormProps) {
-  const apps = useApps()
+  const apps = useAllowedApps()
 
   const [shortCode, setShortCode] = useState(initial?.short_code ?? '')
   const [appId, setAppId] = useState<string>(initial?.app_id?.toString() ?? '')
@@ -58,7 +61,10 @@ export function LinkForm({
 
   // SRE-0004: deep_link is now a scheme-less PATH. The selected app's scheme is
   // shown as a static prefix; the server composes the full per-platform URI.
-  const selectedApp = apps.data?.find((a: App) => a.id === Number(appId))
+  // A single permitted app is the only possible answer, so it needn't be picked.
+  const effectiveAppId =
+    appId || (apps.data?.length === 1 ? String(apps.data[0].id) : '')
+  const selectedApp = apps.data?.find((a: App) => a.id === Number(effectiveAppId))
   const iosScheme = selectedApp?.ios_url_scheme
   const androidScheme = selectedApp?.android_url_scheme
   // Per-platform schemes can diverge (e.g. iOS bakcell:// vs Android bakcellapp://).
@@ -123,7 +129,7 @@ export function LinkForm({
 
     onSubmit({
       short_code: shortCode || undefined,
-      app_id: appId ? Number(appId) : undefined,
+      app_id: Number(effectiveAppId),
       name: name || undefined,
       deep_link: deepLinkPath,
       fallback_url: fallbackMode === 'custom' ? customFallback : '',
@@ -146,12 +152,22 @@ export function LinkForm({
           hint={lockShortCode ? 'Short code cannot be changed' : undefined}
         />
         <Select
-          label="App"
-          value={appId}
+          label={lockApp ? 'App' : 'App *'}
+          required
+          value={effectiveAppId}
           onChange={(e) => setAppId(e.target.value)}
-          hint={apps.isLoading ? 'Loading apps…' : undefined}
+          disabled={lockApp}
+          hint={
+            apps.isLoading
+              ? 'Loading apps…'
+              : lockApp
+                ? 'App cannot be changed'
+                : undefined
+          }
         >
-          <option value="">— None —</option>
+          <option value="" disabled>
+            Select an app…
+          </option>
           {apps.data?.map((a: App) => (
             <option key={a.id} value={a.id}>
               {a.name}

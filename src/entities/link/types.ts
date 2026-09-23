@@ -74,7 +74,8 @@ export interface ListLinksParams {
 
 export interface CreateLinkInput {
   short_code?: string;
-  app_id?: number;
+  /** The backend rejects a link without an app. */
+  app_id: number;
   name?: string;
   deep_link: string;
   /** Omit or "" to follow the app's default_fallback_url. */

@@ -773,6 +773,7 @@ export function LinkDetailPage() {
       >
         <LinkForm
           lockShortCode
+          lockApp
           initial={{
             short_code: data.short_code,
             app_id: data.app?.id ?? data.app_id ?? undefined,
