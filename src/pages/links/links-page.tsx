@@ -14,6 +14,7 @@ import {
   type Column,
 } from "@shared/ui";
 import { LinkForm, useCreateLink } from "@features/link-create";
+import { ExportCsvButton, browserTimeZone } from "@features/csv-export";
 import {
   useLinks,
   type DynamicLink,
@@ -52,13 +53,12 @@ export function LinksPage() {
     return () => clearTimeout(handle);
   }, [search]);
 
-  const params = {
-    limit: PAGE_SIZE,
-    offset,
+  const filters = {
     app_id: appId ? Number(appId) : undefined,
     q: debouncedSearch || undefined,
     source,
   };
+  const params = { limit: PAGE_SIZE, offset, ...filters };
   const links = useLinks(params);
   const create = useCreateLink();
 
@@ -180,7 +180,16 @@ export function LinksPage() {
         title="Links"
         description="Create, manage and monitor every dynamic link."
         actions={
-          <Button onClick={() => setCreateOpen(true)}>+ New link</Button>
+          <>
+            <ExportCsvButton
+              url="/v1/admin/links"
+              params={{ ...filters, tz: browserTimeZone() }}
+              kind="links"
+              total={links.data?.total}
+              noun="links"
+            />
+            <Button onClick={() => setCreateOpen(true)}>+ New link</Button>
+          </>
         }
       />
 

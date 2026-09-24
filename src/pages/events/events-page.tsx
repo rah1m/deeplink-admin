@@ -12,6 +12,7 @@ import {
   type Column,
 } from '@shared/ui'
 import { useAllowedApps } from '@entities/app'
+import { ExportCsvButton, browserTimeZone } from '@features/csv-export'
 import { extractError } from '@shared/api'
 import {
   useEvents,
@@ -75,9 +76,7 @@ export function EventsPage() {
   const [offset, setOffset] = useState(0)
   const hasMeta = Object.keys(meta).length > 0
 
-  const events = useEvents({
-    limit: PAGE_SIZE,
-    offset,
+  const filters = {
     app_id: appId ? Number(appId) : undefined,
     type: type || undefined,
     link_id: linkId ? Number(linkId) : undefined,
@@ -85,7 +84,8 @@ export function EventsPage() {
     // Exclusive bound: the next midnight keeps the whole picked day.
     to: toDate && !rangeInvalid ? localMidnight(toDate, 1) : undefined,
     meta: hasMeta ? meta : undefined,
-  })
+  }
+  const events = useEvents({ limit: PAGE_SIZE, offset, ...filters })
 
   const addMeta = (key: string, value: string) => {
     let error: string | undefined
@@ -263,6 +263,15 @@ export function EventsPage() {
       <PageHeader
         title="Events"
         description="Click, install, open and conversion events across all links."
+        actions={
+          <ExportCsvButton
+            url="/v1/events"
+            params={{ ...filters, tz: browserTimeZone() }}
+            kind="events"
+            total={events.data?.total}
+            noun="events"
+          />
+        }
       />
 
       <Card padding="md" style={{ marginBottom: 16 }}>

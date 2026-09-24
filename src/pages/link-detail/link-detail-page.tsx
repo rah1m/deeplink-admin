@@ -16,6 +16,7 @@ import {
 import { LinkForm } from "@features/link-create";
 import { useDeleteLink, useUpdateLink } from "@features/link-edit";
 import { useCloneLink } from "@features/link-clone";
+import { ExportCsvButton } from "@features/csv-export";
 import {
   linkApi,
   useLinkAdmin,
@@ -416,17 +417,24 @@ export function LinkDetailPage() {
             description={`Bucketed clicks / installs / conversions with revenue overlay · last ${days} days`}
             padding="none"
             actions={
-              <Select
-                value={bucket}
-                onChange={(e) =>
-                  setBucket(e.target.value as TimeseriesBucketSize)
-                }
-                style={{ width: 110 }}
-              >
-                <option value="hour">hour</option>
-                <option value="day">day</option>
-                <option value="week">week</option>
-              </Select>
+              <div style={{ display: "flex", gap: 8 }}>
+                <Select
+                  value={bucket}
+                  onChange={(e) =>
+                    setBucket(e.target.value as TimeseriesBucketSize)
+                  }
+                  style={{ width: 110 }}
+                >
+                  <option value="hour">hour</option>
+                  <option value="day">day</option>
+                  <option value="week">week</option>
+                </Select>
+                <ExportCsvButton
+                  url={`/v1/admin/links/${shortCode}/timeseries`}
+                  params={{ bucket, days }}
+                  kind={`timeseries-${shortCode}`}
+                />
+              </div>
             }
           >
             {timeseries.isLoading ? (
