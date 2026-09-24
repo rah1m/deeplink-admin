@@ -16,7 +16,7 @@ import {
 import { LinkForm } from "@features/link-create";
 import { useDeleteLink, useUpdateLink } from "@features/link-edit";
 import { useCloneLink } from "@features/link-clone";
-import { ExportCsvButton } from "@features/csv-export";
+import { ExportButtons } from "@features/data-export";
 import {
   linkApi,
   useLinkAdmin,
@@ -429,7 +429,7 @@ export function LinkDetailPage() {
                   <option value="day">day</option>
                   <option value="week">week</option>
                 </Select>
-                <ExportCsvButton
+                <ExportButtons
                   url={`/v1/admin/links/${shortCode}/timeseries`}
                   params={{ bucket, days }}
                   kind={`timeseries-${shortCode}`}

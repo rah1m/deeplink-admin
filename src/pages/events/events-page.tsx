@@ -12,7 +12,7 @@ import {
   type Column,
 } from '@shared/ui'
 import { useAllowedApps } from '@entities/app'
-import { ExportCsvButton, browserTimeZone } from '@features/csv-export'
+import { ExportButtons, browserTimeZone } from '@features/data-export'
 import { extractError } from '@shared/api'
 import {
   useEvents,
@@ -264,7 +264,7 @@ export function EventsPage() {
         title="Events"
         description="Click, install, open and conversion events across all links."
         actions={
-          <ExportCsvButton
+          <ExportButtons
             url="/v1/events"
             params={{ ...filters, tz: browserTimeZone() }}
             kind="events"

@@ -14,7 +14,7 @@ import {
   type Column,
 } from "@shared/ui";
 import { LinkForm, useCreateLink } from "@features/link-create";
-import { ExportCsvButton, browserTimeZone } from "@features/csv-export";
+import { ExportButtons, browserTimeZone } from "@features/data-export";
 import {
   useLinks,
   type DynamicLink,
@@ -181,7 +181,7 @@ export function LinksPage() {
         description="Create, manage and monitor every dynamic link."
         actions={
           <>
-            <ExportCsvButton
+            <ExportButtons
               url="/v1/admin/links"
               params={{ ...filters, tz: browserTimeZone() }}
               kind="links"

@@ -30,6 +30,13 @@ export async function downloadFile(
   } catch (err) {
     throw await decodeBlobError(err)
   }
+  // A backend that doesn't know the requested format answers with the JSON
+  // list; saved under the file's name it would be a file that won't open.
+  if (blob.type.includes('json')) {
+    throw new Error(
+      "The server didn't return a file — it may not support this export yet.",
+    )
+  }
   const href = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = href
