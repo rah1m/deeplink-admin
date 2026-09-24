@@ -1,0 +1,50 @@
+.evt__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.evt__meta-note {
+  display: block;
+  margin-top: 6px;
+}
+
+.evt__active {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.evt__chip-remove {
+  margin-left: 4px;
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.evt__chip-remove:hover {
+  opacity: 1;
+}
+
+/* Meta values in the table double as click-to-filter shortcuts. */
+.evt__meta-chip {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.evt__meta-chip:hover .ui-badge {
+  box-shadow: 0 0 0 1px var(--color-border-strong);
+}

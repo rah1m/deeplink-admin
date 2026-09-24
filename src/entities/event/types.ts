@@ -26,6 +26,9 @@ export interface ListEventsParams {
   app_id?: number
   link_id?: number
   type?: EventType
+  /** Sent as meta[key]=value; every key must match. Exact and case-sensitive,
+   * compared as text (so "true" finds a boolean). At most 5 keys. */
+  meta?: Record<string, string>
   limit?: number
   offset?: number
 }

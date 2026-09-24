@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { Fragment, useId, useState, type FormEvent } from 'react'
 import {
   Badge,
+  Button,
   Card,
   DataTable,
   EmptyState,
@@ -18,15 +19,50 @@ import {
   type EventType,
 } from '@entities/event'
 import { formatDate } from '@shared/lib'
+import './events.css'
 
 const PAGE_SIZE = 50
+
+// Mirror the backend's limits on GET /v1/events meta filters.
+const META_KEY_RE = /^[A-Za-z0-9_.-]{1,64}$/
+const MAX_META_FILTERS = 5
+const MAX_META_VALUE_LEN = 256
+const COMMON_META_KEYS = [
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_term',
+  'utm_content',
+  'ref',
+  'device_type',
+  'in_app_browser',
+  'app_direct',
+  'event_name',
+  'currency',
+]
+
+// Numbers aren't offered: the backend compares meta->>key as text, and a
+// number's original spelling (49.90) is lost once the JSON is parsed.
+function filterableMeta(key: string, value: unknown) {
+  if (typeof value !== 'string' && typeof value !== 'boolean') return false
+  const text = String(value)
+  return (
+    META_KEY_RE.test(key) && text.length > 0 && text.length <= MAX_META_VALUE_LEN
+  )
+}
 
 export function EventsPage() {
   const apps = useAllowedApps()
   const [appId, setAppId] = useState<string>('')
   const [type, setType] = useState<EventType | ''>('')
   const [linkId, setLinkId] = useState<string>('')
+  const [meta, setMeta] = useState<Record<string, string>>({})
+  const [metaKey, setMetaKey] = useState('')
+  const [metaValue, setMetaValue] = useState('')
+  const [metaError, setMetaError] = useState<string>()
+  const metaKeyList = useId()
   const [offset, setOffset] = useState(0)
+  const hasMeta = Object.keys(meta).length > 0
 
   const events = useEvents({
     limit: PAGE_SIZE,
@@ -34,7 +70,52 @@ export function EventsPage() {
     app_id: appId ? Number(appId) : undefined,
     type: type || undefined,
     link_id: linkId ? Number(linkId) : undefined,
+    meta: hasMeta ? meta : undefined,
   })
+
+  const addMeta = (key: string, value: string) => {
+    let error: string | undefined
+    if (!key) error = 'Enter a meta key'
+    else if (!META_KEY_RE.test(key))
+      error = 'Key: up to 64 letters, digits, _ . or -'
+    else if (!value) error = 'Enter a value'
+    else if (value.length > MAX_META_VALUE_LEN)
+      error = `Value: at most ${MAX_META_VALUE_LEN} characters`
+    else if (
+      !Object.hasOwn(meta, key) &&
+      Object.keys(meta).length >= MAX_META_FILTERS
+    )
+      error = `At most ${MAX_META_FILTERS} meta filters`
+    setMetaError(error)
+    if (error) return false
+    setMeta({ ...meta, [key]: value })
+    setOffset(0)
+    return true
+  }
+
+  const removeMeta = (key: string) => {
+    const next = { ...meta }
+    delete next[key]
+    setMeta(next)
+    setOffset(0)
+  }
+
+  const onAddMeta = (e: FormEvent) => {
+    e.preventDefault()
+    if (addMeta(metaKey.trim(), metaValue.trim())) {
+      setMetaKey('')
+      setMetaValue('')
+    }
+  }
+
+  const metaKeySuggestions = [
+    ...new Set([
+      ...COMMON_META_KEYS,
+      ...(events.data?.items ?? []).flatMap((e) => Object.keys(e.meta ?? {})),
+    ]),
+  ]
+    .filter((k) => META_KEY_RE.test(k))
+    .sort()
 
   const columns: Column<AnalyticsEvent>[] = [
     {
@@ -114,11 +195,27 @@ export function EventsPage() {
       render: (e) =>
         e.meta && Object.keys(e.meta).length > 0 ? (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {Object.entries(e.meta).map(([k, v]) => (
-              <Badge key={k} tone="neutral">
-                {k}={String(v)}
-              </Badge>
-            ))}
+            {Object.entries(e.meta).map(([k, v]) => {
+              const text = String(v)
+              const badge = (
+                <Badge tone={meta[k] === text ? 'info' : 'neutral'}>
+                  {k}={text}
+                </Badge>
+              )
+              return filterableMeta(k, v) ? (
+                <button
+                  key={k}
+                  type="button"
+                  className="evt__meta-chip"
+                  title={`Filter by ${k}=${text}`}
+                  onClick={() => addMeta(k, text)}
+                >
+                  {badge}
+                </button>
+              ) : (
+                <Fragment key={k}>{badge}</Fragment>
+              )
+            })}
           </div>
         ) : (
           <span style={{ color: 'var(--color-text-subtle)' }}>—</span>
@@ -203,6 +300,66 @@ export function EventsPage() {
             />
           </div>
         </div>
+
+        <form className="evt__meta" onSubmit={onAddMeta}>
+          <div style={{ width: 200 }}>
+            <Input
+              label="Meta key"
+              list={metaKeyList}
+              placeholder="utm_source"
+              value={metaKey}
+              onChange={(e) => {
+                setMetaKey(e.target.value)
+                setMetaError(undefined)
+              }}
+            />
+            <datalist id={metaKeyList}>
+              {metaKeySuggestions.map((k) => (
+                <option key={k} value={k} />
+              ))}
+            </datalist>
+          </div>
+          <div style={{ width: 220 }}>
+            <Input
+              label="Meta value"
+              placeholder="instagram"
+              maxLength={MAX_META_VALUE_LEN}
+              value={metaValue}
+              onChange={(e) => {
+                setMetaValue(e.target.value)
+                setMetaError(undefined)
+              }}
+            />
+          </div>
+          <Button type="submit" variant="secondary">
+            Add filter
+          </Button>
+        </form>
+        {metaError ? (
+          <span className="ui-field__error evt__meta-note">{metaError}</span>
+        ) : (
+          <span className="ui-field__hint evt__meta-note">
+            Exact, case-sensitive match on the value. Click a value in the
+            table to filter by it.
+          </span>
+        )}
+        {hasMeta && (
+          <div className="evt__active">
+            {Object.entries(meta).map(([k, v]) => (
+              <Badge key={k} tone="info">
+                {k}={v}
+                <button
+                  type="button"
+                  className="evt__chip-remove"
+                  aria-label={`Remove filter ${k}`}
+                  onClick={() => removeMeta(k)}
+                >
+                  ×
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
       </Card>
 
       {events.isError ? (
@@ -218,7 +375,11 @@ export function EventsPage() {
           rows={events.data?.items}
           rowKey={(e) => `${e.link_id}-${e.occurred_at}-${e.type}`}
           loading={events.isLoading}
-          empty="No events match this filter"
+          empty={
+            hasMeta
+              ? 'No events match. Meta values must match exactly, including case.'
+              : 'No events match this filter'
+          }
         />
       )}
 
