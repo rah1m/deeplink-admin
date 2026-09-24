@@ -26,6 +26,10 @@ export interface ListEventsParams {
   app_id?: number
   link_id?: number
   type?: EventType
+  /** RFC3339 instants, half-open [from, to). The backend reads a bare
+   * YYYY-MM-DD as a UTC day. */
+  from?: string
+  to?: string
   /** Sent as meta[key]=value; every key must match. Exact and case-sensitive,
    * compared as text (so "true" finds a boolean). At most 5 keys. */
   meta?: Record<string, string>

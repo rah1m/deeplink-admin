@@ -41,6 +41,13 @@ const COMMON_META_KEYS = [
   'currency',
 ]
 
+// The table shows local times, so a picked day is a local day. The backend
+// would read a bare YYYY-MM-DD as a UTC day, so send the local midnight.
+function localMidnight(date: string, addDays = 0) {
+  const [y, m, d] = date.split('-').map(Number)
+  return new Date(y, m - 1, d + addDays).toISOString()
+}
+
 // Numbers aren't offered: the backend compares meta->>key as text, and a
 // number's original spelling (49.90) is lost once the JSON is parsed.
 function filterableMeta(key: string, value: unknown) {
@@ -56,6 +63,10 @@ export function EventsPage() {
   const [appId, setAppId] = useState<string>('')
   const [type, setType] = useState<EventType | ''>('')
   const [linkId, setLinkId] = useState<string>('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  // Dates are YYYY-MM-DD, so string order is date order.
+  const rangeInvalid = !!fromDate && !!toDate && toDate < fromDate
   const [meta, setMeta] = useState<Record<string, string>>({})
   const [metaKey, setMetaKey] = useState('')
   const [metaValue, setMetaValue] = useState('')
@@ -70,6 +81,9 @@ export function EventsPage() {
     app_id: appId ? Number(appId) : undefined,
     type: type || undefined,
     link_id: linkId ? Number(linkId) : undefined,
+    from: fromDate && !rangeInvalid ? localMidnight(fromDate) : undefined,
+    // Exclusive bound: the next midnight keeps the whole picked day.
+    to: toDate && !rangeInvalid ? localMidnight(toDate, 1) : undefined,
     meta: hasMeta ? meta : undefined,
   })
 
@@ -299,7 +313,37 @@ export function EventsPage() {
               }}
             />
           </div>
+          <div style={{ width: 170 }}>
+            <Input
+              label="From"
+              type="date"
+              value={fromDate}
+              max={toDate || undefined}
+              onChange={(e) => {
+                setFromDate(e.target.value)
+                setOffset(0)
+              }}
+            />
+          </div>
+          <div style={{ width: 170 }}>
+            <Input
+              label="To"
+              type="date"
+              value={toDate}
+              min={fromDate || undefined}
+              onChange={(e) => {
+                setToDate(e.target.value)
+                setOffset(0)
+              }}
+            />
+          </div>
         </div>
+        {rangeInvalid && (
+          <span className="ui-field__error evt__note">
+            To must be on or after From. The date range is not applied until
+            then.
+          </span>
+        )}
 
         <form className="evt__meta" onSubmit={onAddMeta}>
           <div style={{ width: 200 }}>
@@ -336,9 +380,9 @@ export function EventsPage() {
           </Button>
         </form>
         {metaError ? (
-          <span className="ui-field__error evt__meta-note">{metaError}</span>
+          <span className="ui-field__error evt__note">{metaError}</span>
         ) : (
-          <span className="ui-field__hint evt__meta-note">
+          <span className="ui-field__hint evt__note">
             Exact, case-sensitive match on the value. Click a value in the
             table to filter by it.
           </span>

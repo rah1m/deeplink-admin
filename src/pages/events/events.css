@@ -8,7 +8,7 @@
   border-top: 1px solid var(--color-border);
 }
 
-.evt__meta-note {
+.evt__note {
   display: block;
   margin-top: 6px;
 }
