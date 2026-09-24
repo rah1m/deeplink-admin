@@ -10,12 +10,17 @@ const SERIES: { key: keyof Omit<TimeseriesBucket, 'ts' | 'revenue'>; label: stri
   { key: 'opens', label: 'Opens', color: 'var(--color-warning)' },
 ]
 
+// Labelled on the bucket's own wall clock (the request's tz, Asia/Baku by
+// default), read from the digits. Converting the instant to the viewer's zone
+// would move a Baku midnight to the previous evening for anyone outside +04,
+// and older backends send the same digits labelled Z, four hours off.
 function bucketLabel(ts: string, bucket: 'hour' | 'day' | 'week') {
-  const d = new Date(ts)
+  const [y, mo, d, h = 0, mi = 0] = (ts.match(/\d+/g) ?? []).map(Number)
+  const wall = new Date(y, mo - 1, d, h, mi)
   if (bucket === 'hour') {
-    return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+    return wall.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
   }
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  return wall.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
 interface SeriesLineProps {
