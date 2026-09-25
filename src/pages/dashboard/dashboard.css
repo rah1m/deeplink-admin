@@ -45,6 +45,12 @@
   font-size: 12px;
 }
 
+/* A name reads as text; the deep link shown in its absence stays muted. */
+.dash__list-name {
+  color: var(--color-text);
+  font-size: 13px;
+}
+
 .dash__list-stat {
   font-size: 11px;
   color: var(--color-text-subtle);
@@ -177,7 +183,6 @@
 
 .dash__bar-label {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: var(--color-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

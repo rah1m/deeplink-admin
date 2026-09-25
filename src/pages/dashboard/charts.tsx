@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Link } from "@tanstack/react-router";
 import type { AnalyticsEvent, EventType } from "@entities/event";
 import type { DynamicLink } from "@entities/link";
 import { formatNumber } from "@shared/lib";
@@ -335,6 +336,7 @@ export function TopLinksBar({ links, limit = 6 }: TopLinksBarProps) {
       .map((l) => ({
         id: l.id,
         short_code: l.short_code,
+        name: l.name,
         clicks: l.stats?.clicks ?? 0,
       }))
       .sort((a, b) => b.clicks - a.clicks)
@@ -353,7 +355,14 @@ export function TopLinksBar({ links, limit = 6 }: TopLinksBarProps) {
         const pct = (r.clicks / rows.max) * 100;
         return (
           <li key={r.id} className="dash__bar-row">
-            <code className="dash__bar-label">{r.short_code}</code>
+            <Link
+              to="/links/$shortCode"
+              params={{ shortCode: r.short_code }}
+              className="dash__bar-label"
+              title={r.name || undefined}
+            >
+              {r.short_code}
+            </Link>
             <div className="dash__bar-track">
               <div
                 className="dash__bar-fill"

@@ -4,7 +4,7 @@ import { useApps } from '@entities/app'
 import { useEvents } from '@entities/event'
 import { Card, PageHeader, Stat, Badge, Spinner } from '@shared/ui'
 import { useSession } from '@entities/session'
-import { formatNumber, formatDate } from '@shared/lib'
+import { cn, formatNumber, formatDate } from '@shared/lib'
 import { EventsTimeline, EventTypeDonut, TopLinksBar } from './charts'
 import './dashboard.css'
 
@@ -108,7 +108,12 @@ export function DashboardPage() {
                   <Link to="/links/$shortCode" params={{ shortCode: l.short_code }}>
                     <code>{l.short_code}</code>
                   </Link>
-                  <span className="dash__list-meta">{l.deep_link}</span>
+                  <span
+                    className={cn('dash__list-meta', l.name && 'dash__list-name')}
+                    title={l.deep_link}
+                  >
+                    {l.name || l.deep_link}
+                  </span>
                   <span className="dash__list-stat">
                     {formatNumber(l.stats?.clicks)} clicks
                   </span>
