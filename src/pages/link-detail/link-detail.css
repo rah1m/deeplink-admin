@@ -208,3 +208,9 @@
   letter-spacing: 0.4px;
   color: var(--color-text-muted);
 }
+
+/* The by-action table follows by-source directly; the last source row has
+   no bottom border, so its header draws the line between them. */
+.lkd__rev-split th {
+  border-top: 1px solid var(--color-border);
+}

@@ -24,6 +24,7 @@ export type {
   TimeseriesResponse,
   RevenueBreakdown,
   RevenueBySource,
+  RevenueByAction,
   RevenueParams,
   FunnelParams,
   FunnelResponse,

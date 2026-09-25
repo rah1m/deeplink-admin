@@ -661,6 +661,37 @@ export function LinkDetailPage() {
                     No revenue events in the window.
                   </div>
                 )}
+                {revenue.data?.by_action &&
+                  revenue.data.by_action.length > 0 && (
+                    <table className="ui-table lkd__rev-split">
+                      <thead>
+                        <tr>
+                          <th>Action</th>
+                          <th style={{ textAlign: "right" }}>Revenue</th>
+                          <th style={{ textAlign: "right" }}>Conversions</th>
+                          <th style={{ textAlign: "right" }}>AOV</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {revenue.data.by_action.map((r) => (
+                          <tr key={r.action}>
+                            <td>
+                              <code>{r.action}</code>
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              {formatRevenue(r.revenue, revenue.data!.currency)}
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              {formatNumber(r.conversions)}
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              {formatRevenue(r.aov, revenue.data!.currency)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
               </>
             )}
           </Card>

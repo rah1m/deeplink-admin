@@ -38,7 +38,7 @@ const COMMON_META_KEYS = [
   'device_type',
   'in_app_browser',
   'app_direct',
-  'event_name',
+  'action',
   'currency',
 ]
 

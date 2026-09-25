@@ -186,12 +186,23 @@ export interface RevenueBySource {
   aov: number;
 }
 
+export interface RevenueByAction {
+  /** meta.action as the app sent it; "(none)" when it sent none. */
+  action: string;
+  revenue: number;
+  conversions: number;
+  aov: number;
+}
+
 export interface RevenueBreakdown {
   currency: string;
   total_revenue: number;
   conversion_count: number;
   avg_order_value: number;
   by_source: RevenueBySource[];
+  /** Split by meta.action, highest revenue first; like by_source, its rows
+   * add up to the totals. Absent from backends that predate it. */
+  by_action?: RevenueByAction[];
 }
 
 export interface RevenueParams {
