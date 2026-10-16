@@ -12,7 +12,7 @@ import { AppForm, useCreateApp } from '@features/app-create'
 import { DomainCheckModal } from '@features/app-domain-check'
 import { useUpdateApp } from '@features/app-edit'
 import { ServiceTokensManager } from '@features/service-tokens'
-import { useApps, type App } from '@entities/app'
+import { isDesktopModeError, useApps, type App } from '@entities/app'
 import { useSession } from '@entities/session'
 import { extractError } from '@shared/api'
 import { formatDate } from '@shared/lib'
@@ -26,6 +26,13 @@ export function AppsPage() {
   const [editing, setEditing] = useState<App | null>(null)
   const [tokensFor, setTokensFor] = useState<App | null>(null)
   const [checking, setChecking] = useState<App | null>(null)
+  // A desktop_mode 400 goes on the field; anything else stays a toast.
+  const [desktopModeErr, setDesktopModeErr] = useState<string>()
+  const onSaveError = (err: unknown) => {
+    const msg = extractError(err)
+    if (isDesktopModeError(msg)) setDesktopModeErr(msg)
+    else toast.error(msg)
+  }
 
   const create = useCreateApp()
   const update = useUpdateApp(editing?.id ?? 0)
@@ -108,7 +115,14 @@ export function AppsPage() {
               <Button size="sm" variant="ghost" onClick={() => setTokensFor(a)}>
                 Tokens
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditing(a)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setDesktopModeErr(undefined)
+                  setEditing(a)
+                }}
+              >
                 Edit
               </Button>
             </>
@@ -125,7 +139,14 @@ export function AppsPage() {
         description="iOS and Android app configurations served via AASA / assetlinks."
         actions={
           isSuper ? (
-            <Button onClick={() => setCreateOpen(true)}>+ New app</Button>
+            <Button
+              onClick={() => {
+                setDesktopModeErr(undefined)
+                setCreateOpen(true)
+              }}
+            >
+              + New app
+            </Button>
           ) : null
         }
       />
@@ -149,13 +170,15 @@ export function AppsPage() {
           submitLabel="Create app"
           loading={create.isPending}
           onCancel={() => setCreateOpen(false)}
+          desktopModeError={desktopModeErr}
+          onDesktopModeChange={() => setDesktopModeErr(undefined)}
           onSubmit={(input) =>
             create.mutate(input, {
               onSuccess: () => {
                 toast.success('App created')
                 setCreateOpen(false)
               },
-              onError: (err) => toast.error(extractError(err)),
+              onError: onSaveError,
             })
           }
         />
@@ -186,13 +209,15 @@ export function AppsPage() {
             submitLabel="Save"
             loading={update.isPending}
             onCancel={() => setEditing(null)}
+            desktopModeError={desktopModeErr}
+            onDesktopModeChange={() => setDesktopModeErr(undefined)}
             onSubmit={(input) =>
               update.mutate(input, {
                 onSuccess: () => {
                   toast.success('App updated')
                   setEditing(null)
                 },
-                onError: (err) => toast.error(extractError(err)),
+                onError: onSaveError,
               })
             }
           />

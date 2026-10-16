@@ -1,6 +1,14 @@
 import { useId, useState, type FormEvent } from 'react'
 import { Input, Textarea, Select, Button } from '@shared/ui'
-import { useAllowedApps, type App } from '@entities/app'
+import {
+  DESKTOP_MODES,
+  desktopModeLabel,
+  desktopPageLacksStores,
+  inheritDesktopLabel,
+  useAllowedApps,
+  type App,
+  type LinkDesktopChoice,
+} from '@entities/app'
 import type { CreateLinkInput, UtmParams } from '@entities/link'
 import type { SocialMeta } from '@entities/app'
 import { cn, httpUrlError } from '@shared/lib'
@@ -15,6 +23,9 @@ interface LinkFormProps {
   lockShortCode?: boolean
   /** Updates can't move a link to another app, so edit mode shows it read-only. */
   lockApp?: boolean
+  /** Server's 400 for desktop_mode, shown on the field. */
+  desktopModeError?: string
+  onDesktopModeChange?: () => void
 }
 
 export function LinkForm({
@@ -25,6 +36,8 @@ export function LinkForm({
   onCancel,
   lockShortCode,
   lockApp,
+  desktopModeError,
+  onDesktopModeChange,
 }: LinkFormProps) {
   const apps = useAllowedApps()
 
@@ -39,6 +52,10 @@ export function LinkForm({
   const [fallbackUrl, setFallbackUrl] = useState(initial?.fallback_url ?? '')
   const [fallbackError, setFallbackError] = useState<string>()
   const fallbackRadio = useId()
+  // "" follows the app's desktop_mode, like an empty fallback_url.
+  const [desktopChoice, setDesktopChoice] = useState<LinkDesktopChoice>(
+    initial?.desktop_mode ?? '',
+  )
   const [expiresAt, setExpiresAt] = useState(initial?.expires_at ?? '')
 
   const meta = initial?.social_meta ?? {}
@@ -133,6 +150,7 @@ export function LinkForm({
       name: name || undefined,
       deep_link: deepLinkPath,
       fallback_url: fallbackMode === 'custom' ? customFallback : '',
+      desktop_mode: desktopChoice,
       expires_at: expiresAt || undefined,
       social_meta: Object.keys(social).length ? social : undefined,
       utm_params: Object.keys(utmOut).length ? utmOut : undefined,
@@ -296,6 +314,31 @@ export function LinkForm({
             {selectedApp.name} has no default fallback URL — desktop clicks
             will land on the domain root. Set one on the Apps page, or use a
             custom URL.
+          </span>
+        )}
+      </div>
+      <div className="ui-field">
+        <Select
+          id="link-desktop-mode"
+          label="Desktop-da"
+          value={desktopChoice}
+          onChange={(e) => {
+            setDesktopChoice(e.target.value as LinkDesktopChoice)
+            onDesktopModeChange?.()
+          }}
+          error={desktopModeError}
+        >
+          {/* Named after the selected app's current value, so it follows an app change. */}
+          <option value="">{inheritDesktopLabel(selectedApp)}</option>
+          {DESKTOP_MODES.map((m) => (
+            <option key={m} value={m}>
+              {desktopModeLabel[m]}
+            </option>
+          ))}
+        </Select>
+        {desktopPageLacksStores(desktopChoice, selectedApp) && (
+          <span className="link-form__warn">
+            Bu tətbiqin mağaza linkləri yoxdur — səhifədə yalnız QR kod görünəcək.
           </span>
         )}
       </div>

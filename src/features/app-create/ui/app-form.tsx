@@ -1,8 +1,11 @@
 import { useState, type FormEvent } from 'react'
-import { Input, Textarea, Button, ConfirmDialog, useToast } from '@shared/ui'
+import { Input, Textarea, Select, Button, ConfirmDialog, useToast } from '@shared/ui'
 import {
+  DESKTOP_MODES,
+  desktopModeLabel,
   useRegenerateSdkKey,
   type App,
+  type DesktopMode,
   type CreateAppInput,
   type SocialMeta,
 } from '@entities/app'
@@ -20,6 +23,9 @@ interface AppFormProps {
   loading?: boolean
   onSubmit: (input: CreateAppInput) => void
   onCancel?: () => void
+  /** Server's 400 for desktop_mode, shown on the field. */
+  desktopModeError?: string
+  onDesktopModeChange?: () => void
 }
 
 /** Read-only publishable SDK key (dlpk_) with copy + regenerate. Edit mode only. */
@@ -91,7 +97,17 @@ function normalizeScheme(raw: string): string {
   return raw.trim().replace(/:\/\/.*$/, '').toLowerCase()
 }
 
-export function AppForm({ mode, initial, app, submitLabel, loading, onSubmit, onCancel }: AppFormProps) {
+export function AppForm({
+  mode,
+  initial,
+  app,
+  submitLabel,
+  loading,
+  onSubmit,
+  onCancel,
+  desktopModeError,
+  onDesktopModeChange,
+}: AppFormProps) {
   const [name, setName] = useState(initial?.name ?? '')
   const [domain, setDomain] = useState(initial?.domain ?? '')
   const [iosBundle, setIosBundle] = useState(initial?.ios_bundle_id ?? '')
@@ -104,6 +120,8 @@ export function AppForm({ mode, initial, app, submitLabel, loading, onSubmit, on
   const [playStoreUrl, setPlayStoreUrl] = useState(initial?.play_store_url ?? '')
   const [defaultFallback, setDefaultFallback] = useState(initial?.default_fallback_url ?? '')
   const [defaultFallbackErr, setDefaultFallbackErr] = useState<string>()
+  const initialDesktopMode: DesktopMode = initial?.desktop_mode ?? 'redirect'
+  const [desktopMode, setDesktopMode] = useState<DesktopMode>(initialDesktopMode)
 
   // "Same as iOS" reflects the common case (95% of apps share the scheme).
   // Start checked only when both schemes already match, to keep edits honest.
@@ -168,6 +186,8 @@ export function AppForm({ mode, initial, app, submitLabel, loading, onSubmit, on
       // rule above — it is sent only when it changed.
       default_fallback_url:
         fallbackNorm !== (initial?.default_fallback_url ?? '') ? fallbackNorm : undefined,
+      // Can't be cleared, so it is never "": sent only when it changed.
+      desktop_mode: desktopMode !== initialDesktopMode ? desktopMode : undefined,
     })
   }
 
@@ -198,6 +218,23 @@ export function AppForm({ mode, initial, app, submitLabel, loading, onSubmit, on
         error={defaultFallbackErr}
         hint="Where this app's links send clicks the app can't open (desktop, or no store URL) unless a link sets its own. Links on the default follow changes immediately. Leave empty for no default."
       />
+      <Select
+        id="app-desktop-mode"
+        label="Desktop-da"
+        value={desktopMode}
+        onChange={(e) => {
+          setDesktopMode(e.target.value as DesktopMode)
+          onDesktopModeChange?.()
+        }}
+        error={desktopModeError}
+        hint="Kompüterdən açılan linklər üçün. Linkin öz seçimi yoxdursa bu tətbiq olunur."
+      >
+        {DESKTOP_MODES.map((m) => (
+          <option key={m} value={m}>
+            {desktopModeLabel[m]}
+          </option>
+        ))}
+      </Select>
 
       <div className="app-form__section">iOS</div>
       <div className="app-form__grid">

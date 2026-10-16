@@ -4,6 +4,7 @@ export type {
   LinkServiceTokenRef,
   LinkSource,
   FallbackSource,
+  DesktopModeSource,
   LinkSourceFilter,
   LinkStats,
   ListLinksParams,

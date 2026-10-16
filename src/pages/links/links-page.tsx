@@ -21,7 +21,7 @@ import {
   type LinkSourceFilter,
   linkApi,
 } from "@entities/link";
-import { useAllowedApps } from "@entities/app";
+import { isDesktopModeError, useAllowedApps } from "@entities/app";
 import { formatDate, formatNumber, copyToClipboard, cn } from "@shared/lib";
 import { extractError } from "@shared/api";
 import "./links.css";
@@ -44,6 +44,7 @@ export function LinksPage() {
   const [offset, setOffset] = useState(0);
   const [source, setSource] = useState<LinkSourceFilter>("admin");
   const [createOpen, setCreateOpen] = useState(false);
+  const [desktopModeErr, setDesktopModeErr] = useState<string>();
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -188,7 +189,14 @@ export function LinksPage() {
               total={links.data?.total}
               noun="links"
             />
-            <Button onClick={() => setCreateOpen(true)}>+ New link</Button>
+            <Button
+              onClick={() => {
+                setDesktopModeErr(undefined);
+                setCreateOpen(true);
+              }}
+            >
+              + New link
+            </Button>
           </>
         }
       />
@@ -281,13 +289,20 @@ export function LinksPage() {
           submitLabel="Create link"
           loading={create.isPending}
           onCancel={() => setCreateOpen(false)}
+          desktopModeError={desktopModeErr}
+          onDesktopModeChange={() => setDesktopModeErr(undefined)}
           onSubmit={(input) => {
             create.mutate(input, {
               onSuccess: (res) => {
                 toast.success(`Created ${res.short_code}`);
                 setCreateOpen(false);
               },
-              onError: (err) => toast.error(extractError(err)),
+              onError: (err) => {
+                // A desktop_mode 400 goes on the field; anything else stays a toast.
+                const msg = extractError(err);
+                if (isDesktopModeError(msg)) setDesktopModeErr(msg);
+                else toast.error(msg);
+              },
             });
           }}
         />

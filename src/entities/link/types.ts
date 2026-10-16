@@ -1,4 +1,4 @@
-import type { App, SocialMeta } from "@entities/app";
+import type { App, DesktopMode, SocialMeta } from "@entities/app";
 
 export type UtmParams = Partial<
   Record<
@@ -23,6 +23,8 @@ export type LinkSource = "admin" | "service";
 
 export type FallbackSource = "custom" | "app_default" | "none";
 
+export type DesktopModeSource = "custom" | "app_default";
+
 export type LinkSourceFilter = LinkSource | "all";
 
 export interface LinkServiceTokenRef {
@@ -44,6 +46,12 @@ export interface DynamicLink {
    * app's default_fallback_url when that is empty. Read-only. */
   effective_fallback_url: string;
   fallback_source: FallbackSource;
+  /** Stored value — null when the link follows its app's desktop_mode. Like
+   * fallback_url, never send effective_desktop_mode back in its place. */
+  desktop_mode?: DesktopMode | null;
+  /** What a desktop visitor actually gets. Read-only. */
+  effective_desktop_mode?: DesktopMode;
+  desktop_mode_source?: DesktopModeSource;
   is_active: boolean;
   expires_at: string | null;
   created_at: string;
@@ -80,6 +88,8 @@ export interface CreateLinkInput {
   deep_link: string;
   /** Omit or "" to follow the app's default_fallback_url. */
   fallback_url?: string;
+  /** Omit or "" to follow the app's desktop_mode. */
+  desktop_mode?: DesktopMode | "";
   expires_at?: string | null;
   social_meta?: SocialMeta;
   utm_params?: UtmParams;
@@ -91,6 +101,8 @@ export interface UpdateLinkInput {
   deep_link?: string;
   /** "" puts the link back on the app default. */
   fallback_url?: string;
+  /** Omit = unchanged, "" = back on the app's desktop_mode. */
+  desktop_mode?: DesktopMode | "";
   expires_at?: string | null;
   is_active?: boolean;
   social_meta?: SocialMeta;

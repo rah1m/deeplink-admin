@@ -28,6 +28,12 @@ import {
   type TimeseriesBucketSize,
 } from "@entities/link";
 import {
+  desktopModePatch,
+  desktopModeShortLabel,
+  isDesktopModeError,
+  linkDesktopChoice,
+} from "@entities/app";
+import {
   copyToClipboard,
   formatDate,
   formatDuration,
@@ -82,6 +88,7 @@ export function LinkDetailPage() {
   const clone = useCloneLink(shortCode);
   const remove = useDeleteLink(shortCode);
   const [editOpen, setEditOpen] = useState(false);
+  const [desktopModeErr, setDesktopModeErr] = useState<string>();
   const [cloneOpen, setCloneOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -96,6 +103,8 @@ export function LinkDetailPage() {
 
   const expired =
     data.expires_at != null && new Date(data.expires_at) < new Date();
+  // The stored choice, "" when following the app — never the effective mode.
+  const desktopChoice = linkDesktopChoice(data);
 
   const f = funnel.data;
   const funnelStages = f
@@ -206,7 +215,14 @@ export function LinkDetailPage() {
             >
               Clone
             </Button>
-            <Button onClick={() => setEditOpen(true)}>Edit</Button>
+            <Button
+              onClick={() => {
+                setDesktopModeErr(undefined);
+                setEditOpen(true);
+              }}
+            >
+              Edit
+            </Button>
             <Button variant="danger" onClick={() => setDeleteOpen(true)}>
               Delete
             </Button>
@@ -312,6 +328,18 @@ export function LinkDetailPage() {
                   </>
                 )}
               </dd>
+
+              {data.effective_desktop_mode && (
+                <>
+                  <dt>Desktop</dt>
+                  <dd>
+                    {desktopModeShortLabel[data.effective_desktop_mode]}
+                    {data.desktop_mode_source === "app_default" && (
+                      <span className="lkd__sub"> (brend default-u)</span>
+                    )}
+                  </dd>
+                </>
+              )}
 
               {data.app && (
                 <>
@@ -819,6 +847,7 @@ export function LinkDetailPage() {
             name: data.name ?? "",
             deep_link: data.deep_link,
             fallback_url: data.fallback_url,
+            desktop_mode: desktopChoice,
             expires_at: data.expires_at,
             social_meta: data.social_meta,
             utm_params: data.utm_params,
@@ -827,12 +856,16 @@ export function LinkDetailPage() {
           submitLabel="Save changes"
           loading={update.isPending}
           onCancel={() => setEditOpen(false)}
+          desktopModeError={desktopModeErr}
+          onDesktopModeChange={() => setDesktopModeErr(undefined)}
           onSubmit={(input) =>
             update.mutate(
               {
                 name: input.name ?? "",
                 deep_link: input.deep_link,
                 fallback_url: input.fallback_url,
+                // Sent only when the select changed; "" puts it back on the app.
+                desktop_mode: desktopModePatch(desktopChoice, input.desktop_mode),
                 expires_at: input.expires_at,
                 social_meta: input.social_meta,
                 utm_params: input.utm_params,
@@ -844,7 +877,11 @@ export function LinkDetailPage() {
                   setEditOpen(false);
                   link.refetch();
                 },
-                onError: (err) => toast.error(extractError(err)),
+                onError: (err) => {
+                  const msg = extractError(err);
+                  if (isDesktopModeError(msg)) setDesktopModeErr(msg);
+                  else toast.error(msg);
+                },
               },
             )
           }
