@@ -9,8 +9,7 @@ import {
   type App,
   type LinkDesktopChoice,
 } from '@entities/app'
-import type { CreateLinkInput, UtmParams } from '@entities/link'
-import type { SocialMeta } from '@entities/app'
+import { compactStrings, type CreateLinkInput } from '@entities/link'
 import { cn, httpUrlError } from '@shared/lib'
 import './link-form.css'
 
@@ -123,26 +122,37 @@ export function LinkForm({
 
     let payload: Record<string, unknown> | undefined
     if (payloadText.trim()) {
+      let parsed: unknown
       try {
-        payload = JSON.parse(payloadText)
+        parsed = JSON.parse(payloadText)
       } catch {
         setPayloadError('Invalid JSON')
         return
       }
+      // The server would store `null` or an array as-is; payload is a map.
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        setPayloadError('Payload must be a JSON object, e.g. {"screen": "tariffs"}')
+        return
+      }
+      payload = parsed as Record<string, unknown>
     }
     setPayloadError(undefined)
 
-    const social: SocialMeta = {}
-    if (metaTitle) social.title = metaTitle
-    if (metaDesc) social.description = metaDesc
-    if (metaImage) social.image = metaImage
-
-    const utmOut: UtmParams = {}
-    if (utmSource) utmOut.utm_source = utmSource
-    if (utmMedium) utmOut.utm_medium = utmMedium
-    if (utmCampaign) utmOut.utm_campaign = utmCampaign
-    if (utmTerm) utmOut.utm_term = utmTerm
-    if (utmContent) utmOut.utm_content = utmContent
+    // Blank (after trim) fields are dropped. An empty map comes out as
+    // undefined: create omits it, and edit compares it with the original to
+    // send {} when it was cleared (see mapPatch).
+    const social = compactStrings({
+      title: metaTitle,
+      description: metaDesc,
+      image: metaImage,
+    })
+    const utmOut = compactStrings({
+      utm_source: utmSource,
+      utm_medium: utmMedium,
+      utm_campaign: utmCampaign,
+      utm_term: utmTerm,
+      utm_content: utmContent,
+    })
 
     onSubmit({
       short_code: shortCode || undefined,
@@ -154,7 +164,7 @@ export function LinkForm({
       expires_at: expiresAt || undefined,
       social_meta: Object.keys(social).length ? social : undefined,
       utm_params: Object.keys(utmOut).length ? utmOut : undefined,
-      payload,
+      payload: payload && Object.keys(payload).length ? payload : undefined,
     })
   }
 

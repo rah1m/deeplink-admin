@@ -19,6 +19,10 @@ import { useCloneLink } from "@features/link-clone";
 import { ExportButtons } from "@features/data-export";
 import {
   linkApi,
+  mapPatch,
+  withHiddenKeys,
+  SOCIAL_META_FORM_KEYS,
+  UTM_FORM_KEYS,
   useLinkAdmin,
   useLinkFunnel,
   useLinkRevenue,
@@ -867,9 +871,21 @@ export function LinkDetailPage() {
                 // Sent only when the select changed; "" puts it back on the app.
                 desktop_mode: desktopModePatch(desktopChoice, input.desktop_mode),
                 expires_at: input.expires_at,
-                social_meta: input.social_meta,
-                utm_params: input.utm_params,
-                payload: input.payload,
+                // PATCH can't tell cleared from untouched: omitted when
+                // unchanged, {} when cleared, else the full map (no merge).
+                social_meta: mapPatch(
+                  data.social_meta,
+                  withHiddenKeys(
+                    data.social_meta,
+                    input.social_meta,
+                    SOCIAL_META_FORM_KEYS,
+                  ),
+                ),
+                utm_params: mapPatch(
+                  data.utm_params,
+                  withHiddenKeys(data.utm_params, input.utm_params, UTM_FORM_KEYS),
+                ),
+                payload: mapPatch(data.payload, input.payload),
               },
               {
                 onSuccess: () => {

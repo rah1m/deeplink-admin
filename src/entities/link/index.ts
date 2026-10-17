@@ -40,3 +40,12 @@ export {
   useLinkRevenue,
   useLinkFunnel,
 } from './queries'
+export {
+  mapPatch,
+  compactStrings,
+  sameMap,
+  normalizeMap,
+  withHiddenKeys,
+  SOCIAL_META_FORM_KEYS,
+  UTM_FORM_KEYS,
+} from './map-patch'
