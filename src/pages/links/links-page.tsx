@@ -70,6 +70,15 @@ export function LinksPage() {
 
   const columns: Column<DynamicLink>[] = [
     {
+      // The id events and the dashboard show as "#5".
+      key: "id",
+      header: "ID",
+      width: "70px",
+      render: (l) => (
+        <code style={{ color: "var(--color-text-muted)" }}>#{l.id}</code>
+      ),
+    },
+    {
       key: "app_name",
       header: "App name",
       width: "140px",

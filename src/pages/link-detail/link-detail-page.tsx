@@ -285,6 +285,12 @@ export function LinkDetailPage() {
 
           <Card title="Details" padding="md">
             <dl className="lkd__dl">
+              {/* What events and the dashboard call this link ("#5"). */}
+              <dt>ID</dt>
+              <dd>
+                <code>#{data.id}</code>
+              </dd>
+
               {data.name && (
                 <>
                   <dt>Name</dt>
