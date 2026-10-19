@@ -12,10 +12,31 @@ import { AppForm, useCreateApp } from '@features/app-create'
 import { DomainCheckModal } from '@features/app-domain-check'
 import { useUpdateApp } from '@features/app-edit'
 import { ServiceTokensManager } from '@features/service-tokens'
-import { isDesktopModeError, useApps, type App } from '@entities/app'
+import {
+  desktopModeShortLabel,
+  isDesktopModeError,
+  useApps,
+  type App,
+} from '@entities/app'
 import { useSession } from '@entities/session'
 import { extractError } from '@shared/api'
-import { formatDate } from '@shared/lib'
+
+/** A platform is configured once it has both its app id and its URL scheme —
+ * the resolver needs both. The values themselves are on hover. */
+function PlatformBadge({ id, scheme }: { id?: string; scheme?: string }) {
+  const title = [id, scheme && `${scheme}://`].filter(Boolean).join(' · ')
+  return (
+    <span title={title || undefined}>
+      {id && scheme ? (
+        <Badge tone="success">configured</Badge>
+      ) : id || scheme ? (
+        <Badge tone="warning">partial</Badge>
+      ) : (
+        <Badge tone="neutral">missing</Badge>
+      )}
+    </span>
+  )
+}
 
 export function AppsPage() {
   const apps = useApps()
@@ -60,28 +81,26 @@ export function AppsPage() {
         ),
     },
     {
-      key: 'ios',
-      header: 'iOS bundle',
+      key: 'desktop',
+      header: 'Desktop',
       render: (a) =>
-        a.ios_bundle_id ? <code>{a.ios_bundle_id}</code> : <span style={{ color: 'var(--color-text-subtle)' }}>—</span>,
+        a.desktop_mode ? (
+          desktopModeShortLabel[a.desktop_mode]
+        ) : (
+          <span style={{ color: 'var(--color-text-subtle)' }}>—</span>
+        ),
     },
     {
-      key: 'ios_scheme',
-      header: 'iOS scheme',
-      render: (a) =>
-        a.ios_url_scheme ? <code>{a.ios_url_scheme}</code> : <span style={{ color: 'var(--color-text-subtle)' }}>—</span>,
+      key: 'ios',
+      header: 'iOS',
+      render: (a) => <PlatformBadge id={a.ios_bundle_id} scheme={a.ios_url_scheme} />,
     },
     {
       key: 'android',
-      header: 'Android package',
-      render: (a) =>
-        a.android_package ? <code>{a.android_package}</code> : <span style={{ color: 'var(--color-text-subtle)' }}>—</span>,
-    },
-    {
-      key: 'android_scheme',
-      header: 'Android scheme',
-      render: (a) =>
-        a.android_url_scheme ? <code>{a.android_url_scheme}</code> : <span style={{ color: 'var(--color-text-subtle)' }}>—</span>,
+      header: 'Android',
+      render: (a) => (
+        <PlatformBadge id={a.android_package} scheme={a.android_url_scheme} />
+      ),
     },
     {
       key: 'sha',
@@ -92,13 +111,6 @@ export function AppsPage() {
         ) : (
           <Badge tone="neutral">missing</Badge>
         ),
-    },
-    {
-      key: 'created',
-      header: 'Created',
-      render: (a) => (
-        <span style={{ color: 'var(--color-text-muted)' }}>{formatDate(a.created_at)}</span>
-      ),
     },
     {
       key: 'actions',
