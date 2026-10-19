@@ -1,15 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { userApi, userQueryKeys, type CreateUserInput } from '@entities/user'
+import type { CreateUserInput } from '@entities/user'
 import { Button, Input, Select } from '@shared/ui'
-
-export function useCreateUser() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (body: CreateUserInput) => userApi.create(body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: userQueryKeys.all() }),
-  })
-}
 
 interface CreateUserFormProps {
   loading?: boolean

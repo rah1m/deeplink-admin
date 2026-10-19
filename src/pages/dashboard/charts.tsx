@@ -112,7 +112,7 @@ export function EventsTimeline({ events, days = 14 }: EventsTimelineProps) {
       const meta = SERIES.find((s) => s.type === t)!;
       return { type: t, area, line, color: meta.color, label: meta.label };
     });
-  }, [buckets, types, max, innerH, innerW, stepX]);
+  }, [buckets, types, max, innerH, stepX]);
 
   const ticks = 4;
   const tickValues = Array.from({ length: ticks + 1 }, (_, i) =>
@@ -233,12 +233,16 @@ export function EventTypeDonut({ events }: EventTypeDonutProps) {
   const stroke = 22;
   const circumference = 2 * Math.PI * r;
 
-  let offset = 0;
-  const segments = SERIES.map((s) => {
+  const lengths = SERIES.map((s) =>
+    data.total === 0 ? 0 : (data.counts[s.type] / data.total) * circumference,
+  );
+  const segments = SERIES.map((s, i) => {
     const value = data.counts[s.type];
     const fraction = data.total === 0 ? 0 : value / data.total;
-    const length = fraction * circumference;
-    const seg = {
+    const length = lengths[i];
+    // Each segment starts where the ones before it end.
+    const offset = lengths.slice(0, i).reduce((sum, l) => sum + l, 0);
+    return {
       type: s.type,
       label: s.label,
       color: s.color,
@@ -247,8 +251,6 @@ export function EventTypeDonut({ events }: EventTypeDonutProps) {
       dasharray: `${length} ${circumference - length}`,
       dashoffset: -offset,
     };
-    offset += length;
-    return seg;
   });
 
   return (

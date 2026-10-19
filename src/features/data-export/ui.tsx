@@ -9,11 +9,6 @@ const EXPORT_LIMIT = 5000
 
 type ExportFormat = 'xlsx' | 'csv'
 
-/** The viewer's IANA zone, so exported timestamps read as the screen shows them. */
-export function browserTimeZone(): string | undefined {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined
-}
-
 function localDate() {
   const d = new Date()
   const pad = (n: number) => String(n).padStart(2, '0')

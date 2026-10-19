@@ -1,16 +1,7 @@
-import { useMutation } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { userApi } from '@entities/user'
 import { Button, Input } from '@shared/ui'
 
 const MIN_LENGTH = 12
-
-export function useResetUserPassword(userId: number) {
-  return useMutation({
-    mutationFn: (new_password: string) =>
-      userApi.resetPassword(userId, { new_password }),
-  })
-}
 
 interface ResetUserPasswordFormProps {
   username: string

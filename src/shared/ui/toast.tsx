@@ -1,22 +1,13 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import { useCallback, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { ToastContext, type ToastContextValue, type ToastTone } from './use-toast'
 import './toast.css'
-
-type ToastTone = 'info' | 'success' | 'warning' | 'danger'
 
 interface ToastItem {
   id: number
   tone: ToastTone
   text: string
 }
-
-interface ToastContextValue {
-  push: (text: string, tone?: ToastTone) => void
-  success: (text: string) => void
-  error: (text: string) => void
-}
-
-const ToastContext = createContext<ToastContextValue | null>(null)
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([])
@@ -50,10 +41,4 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       )}
     </ToastContext.Provider>
   )
-}
-
-export function useToast(): ToastContextValue {
-  const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast must be inside <ToastProvider>')
-  return ctx
 }

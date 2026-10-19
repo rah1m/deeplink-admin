@@ -173,6 +173,7 @@ export function UsersPage() {
       >
         {permsOf && (
           <UserPermissionsForm
+            key={permsOf.id}
             user={permsOf}
             loading={setApps?.isPending}
             onCancel={() => setPermsOf(null)}

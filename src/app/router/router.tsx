@@ -135,7 +135,7 @@ const routeTree = rootRoute.addChildren([
   ]),
 ])
 
-export const router = new Router({
+const router = new Router({
   routeTree,
   defaultPreload: 'intent',
 })

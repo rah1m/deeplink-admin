@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Card,
   CenteredSpinner,
@@ -40,17 +40,14 @@ function formatRevenue(value: number, currency: string) {
 
 export function AnalyticsPage() {
   const apps = useAllowedApps()
-  const [appId, setAppId] = useState<number | null>(null)
+  const [pickedAppId, setAppId] = useState<number | null>(null)
   const [days, setDays] = useState<number>(30)
   const [currency, setCurrency] = useState('AZN')
   const [bucket, setBucket] = useState<TimeseriesBucketSize>('day')
-  const [linkShortCode, setLinkShortCode] = useState<string>('')
+  const [pickedShortCode, setLinkShortCode] = useState<string>('')
 
-  useEffect(() => {
-    if (appId == null && apps.data && apps.data.length > 0) {
-      setAppId(apps.data[0].id)
-    }
-  }, [apps.data, appId])
+  // Until the user picks one, the first app is selected.
+  const appId = pickedAppId ?? apps.data?.[0]?.id ?? null
 
   const summary = useAppSummary(
     appId ? { app_id: appId, days, currency } : null,
@@ -69,16 +66,10 @@ export function AnalyticsPage() {
       .slice(0, 20)
   }, [topLinks.data])
 
-  useEffect(() => {
-    if (sortedLinks.length > 0) {
-      const first = sortedLinks[0].short_code
-      if (!sortedLinks.find((l) => l.short_code === linkShortCode)) {
-        setLinkShortCode(first)
-      }
-    } else if (linkShortCode) {
-      setLinkShortCode('')
-    }
-  }, [sortedLinks, linkShortCode])
+  // The picked link while it is still in the top list, else the top link.
+  const linkShortCode = sortedLinks.some((l) => l.short_code === pickedShortCode)
+    ? pickedShortCode
+    : (sortedLinks[0]?.short_code ?? '')
 
   const timeseries = useLinkTimeseries(linkShortCode || undefined, { bucket, days })
 

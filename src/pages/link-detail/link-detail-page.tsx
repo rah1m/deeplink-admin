@@ -82,6 +82,8 @@ export function LinkDetailPage() {
   const [days, setDays] = useState<number>(30);
   // /funnel rejects days > 60, so the widest page window clamps to its max.
   const funnelDays = Math.min(days, 60);
+  // Read once: render must stay pure, and the cutoff is a fixed past date.
+  const [now] = useState(() => Date.now());
   const [currency, setCurrency] = useState<string>("AZN");
   const timeseries = useLinkTimeseries(shortCode, { bucket, days });
   const stats = useLinkStats(shortCode, groupBy || undefined, days);
@@ -127,7 +129,7 @@ export function LinkDetailPage() {
     f.conversions === 0 &&
     f.app_direct_opens === 0;
   const funnelWindowPredatesTracking =
-    new Date(Date.now() - funnelDays * 86_400_000) < CLICK_TRACKING_DEPLOY;
+    new Date(now - funnelDays * 86_400_000) < CLICK_TRACKING_DEPLOY;
   const hasAppDirect =
     !!f && (f.app_direct_opens > 0 || f.app_direct_conversions > 0);
 

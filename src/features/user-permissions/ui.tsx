@@ -1,25 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-import { userApi, userQueryKeys, type User } from '@entities/user'
+import { useState } from 'react'
+import type { User } from '@entities/user'
 import { useApps, type App } from '@entities/app'
 import { Button, Spinner } from '@shared/ui'
 import './ui.css'
-
-export function useUpdateUserApps(userId: number) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (app_ids: number[]) => userApi.setApps(userId, { app_ids }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: userQueryKeys.all() }),
-  })
-}
-
-export function useDeleteUser() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (id: number) => userApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: userQueryKeys.all() }),
-  })
-}
 
 interface UserPermissionsFormProps {
   user: User
@@ -35,11 +18,8 @@ export function UserPermissionsForm({
   onCancel,
 }: UserPermissionsFormProps) {
   const apps = useApps()
-  const [selected, setSelected] = useState<Set<number>>(new Set(user.app_ids))
-
-  useEffect(() => {
-    setSelected(new Set(user.app_ids))
-  }, [user])
+  // Seeded once per user: callers key the form by user id to reset it.
+  const [selected, setSelected] = useState<Set<number>>(() => new Set(user.app_ids))
 
   const toggle = (id: number) => {
     setSelected((s) => {
