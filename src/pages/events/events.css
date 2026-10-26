@@ -36,6 +36,18 @@
   opacity: 1;
 }
 
+/* The badge has a fixed height, so "dead click" must not wrap inside it. */
+.evt__type .ui-badge {
+  white-space: nowrap;
+}
+
+/* Why a dead_click's link was stopped, under its type badge. */
+.evt__reason {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
 /* Meta values in the table double as click-to-filter shortcuts. */
 .evt__meta-chip {
   padding: 0;

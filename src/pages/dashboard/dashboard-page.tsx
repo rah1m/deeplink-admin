@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { useLinks } from '@entities/link'
 import { useApps } from '@entities/app'
-import { useEvents } from '@entities/event'
+import { eventTypeBadgeTone, eventTypeText, useEvents } from '@entities/event'
 import { Card, PageHeader, Stat, Badge, Spinner } from '@shared/ui'
 import { useSession } from '@entities/session'
 import { cn, formatNumber, formatDate } from '@shared/lib'
@@ -143,18 +143,8 @@ export function DashboardPage() {
             <ul className="dash__list">
               {events.data?.items.map((e, i) => (
                 <li key={i}>
-                  <Badge
-                    tone={
-                      e.type === 'install'
-                        ? 'success'
-                        : e.type === 'click'
-                          ? 'info'
-                          : e.type === 'conversion'
-                            ? 'primary'
-                            : 'neutral'
-                    }
-                  >
-                    {e.type}
+                  <Badge tone={eventTypeBadgeTone(e.type)}>
+                    {eventTypeText(e.type)}
                   </Badge>
                   <span className="dash__list-meta">link #{e.link_id}</span>
                   <span className="dash__list-stat">{formatDate(e.occurred_at)}</span>

@@ -147,6 +147,14 @@ export function LinkDetailPage() {
       ? `last ${stats.data.days} days`
       : "all time";
 
+  // SRE-0115: clicks that arrived while the link was stopped, over the stats
+  // call's own window. Not clicks — shown beside the status only, never in a
+  // click figure. Hidden on a live link and on a backend that predates it.
+  const deadClicks =
+    !data.is_active || expired ? stats.data?.dead_clicks : undefined;
+  const deadClicksWindow =
+    stats.data?.days != null ? `son ${stats.data.days} gündə` : "bütün dövrdə";
+
   const onCopy = async () => {
     await copyToClipboard(shortUrl);
     toast.success("Short URL copied");
@@ -822,6 +830,15 @@ export function LinkDetailPage() {
                 {data.is_active ? "Deactivate" : "Activate"}
               </Button>
             </div>
+            {deadClicks != null && (
+              <p
+                className="lkd__dead"
+                title="Clicks while the link was stopped. Visitors got the brand's page; not counted in Clicks."
+              >
+                {data.is_active ? "Vaxtı bitib" : "Dayandırılıb"} ·{" "}
+                {deadClicksWindow} {formatNumber(deadClicks)} klik
+              </p>
+            )}
             <p className="lkd__hint">
               Deactivating returns 404 from the public redirect endpoint. Use
               Delete for permanent removal — historical events are preserved.

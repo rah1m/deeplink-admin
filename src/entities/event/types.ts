@@ -1,4 +1,13 @@
-export type EventType = 'click' | 'install' | 'open' | 'conversion' | 'preview'
+/** Every type GET /v1/events returns and filters. preview and dead_click are
+ * written by the server only and are not clicks: dead_click is a click on a
+ * link that was switched off or past expires_at (meta.reason says which). */
+export type EventType =
+  | 'click'
+  | 'install'
+  | 'open'
+  | 'conversion'
+  | 'preview'
+  | 'dead_click'
 
 export interface AnalyticsEvent {
   type: EventType

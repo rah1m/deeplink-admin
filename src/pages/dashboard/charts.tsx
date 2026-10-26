@@ -4,13 +4,21 @@ import type { AnalyticsEvent, EventType } from "@entities/event";
 import type { DynamicLink } from "@entities/link";
 import { formatNumber } from "@shared/lib";
 
-const SERIES: { type: EventType; label: string; color: string }[] = [
+// Only the charted types are counted: dead_click (SRE-0115) and any type this
+// panel doesn't know yet stay out, as they do in the backend's summary.
+type ChartType = Exclude<EventType, "dead_click">;
+
+const SERIES: { type: ChartType; label: string; color: string }[] = [
   { type: "click", label: "Clicks", color: "var(--color-info)" },
   { type: "install", label: "Installs", color: "var(--color-success)" },
   { type: "conversion", label: "Conversions", color: "var(--color-primary)" },
   { type: "open", label: "Opens", color: "var(--color-warning)" },
   { type: "preview", label: "Previews", color: "var(--color-text-subtle)" },
 ];
+
+function isChartType(type: string): type is ChartType {
+  return SERIES.some((s) => s.type === type);
+}
 
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
@@ -34,7 +42,7 @@ export function EventsTimeline({ events, days = 14 }: EventsTimelineProps) {
     const dayMs = 86_400_000;
     const buckets = Array.from({ length: days }, (_, i) => {
       const ts = today - (days - 1 - i) * dayMs;
-      const counts: Record<EventType, number> = {
+      const counts: Record<ChartType, number> = {
         click: 0,
         install: 0,
         open: 0,
@@ -45,13 +53,14 @@ export function EventsTimeline({ events, days = 14 }: EventsTimelineProps) {
     });
     const first = buckets[0].ts;
     for (const e of events) {
+      if (!isChartType(e.type)) continue;
       const t = startOfDay(new Date(e.occurred_at));
       if (t < first) continue;
       const idx = Math.round((t - first) / dayMs);
       if (idx < 0 || idx >= buckets.length) continue;
       buckets[idx].counts[e.type] += 1;
     }
-    const types: EventType[] = [
+    const types: ChartType[] = [
       "click",
       "install",
       "conversion",
@@ -211,14 +220,14 @@ interface EventTypeDonutProps {
 
 export function EventTypeDonut({ events }: EventTypeDonutProps) {
   const data = useMemo(() => {
-    const counts: Record<EventType, number> = {
+    const counts: Record<ChartType, number> = {
       click: 0,
       install: 0,
       open: 0,
       conversion: 0,
       preview: 0,
     };
-    for (const e of events) counts[e.type] += 1;
+    for (const e of events) if (isChartType(e.type)) counts[e.type] += 1;
     const total = (Object.values(counts) as number[]).reduce(
       (s, v) => s + v,
       0,

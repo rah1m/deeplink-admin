@@ -75,6 +75,13 @@
   gap: 10px;
 }
 
+.lkd__dead {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
 .lkd__hint {
   margin: 8px 0 0;
   font-size: 12px;

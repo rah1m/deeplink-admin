@@ -15,6 +15,11 @@ import { useAllowedApps } from '@entities/app'
 import { ExportButtons, browserTimeZone } from '@features/data-export'
 import { extractError } from '@shared/api'
 import {
+  EVENT_TYPES,
+  deadClickReasonText,
+  eventTypeBadgeTone,
+  eventTypeHintText,
+  eventTypeText,
   useEvents,
   type AnalyticsEvent,
   type EventType,
@@ -136,23 +141,20 @@ export function EventsPage() {
       key: 'type',
       header: 'Type',
       width: '120px',
-      render: (e) => (
-        <Badge
-          tone={
-            e.type === 'install'
-              ? 'success'
-              : e.type === 'click'
-                ? 'info'
-                : e.type === 'conversion'
-                  ? 'primary'
-                  : e.type === 'preview'
-                    ? 'warning'
-                    : 'neutral'
-          }
-        >
-          {e.type}
-        </Badge>
-      ),
+      render: (e) => {
+        const reason =
+          e.type === 'dead_click' ? deadClickReasonText(e.meta?.reason) : undefined
+        return (
+          <>
+            <span className="evt__type" title={eventTypeHintText(e.type)}>
+              <Badge tone={eventTypeBadgeTone(e.type)}>
+                {eventTypeText(e.type)}
+              </Badge>
+            </span>
+            {reason && <div className="evt__reason">{reason}</div>}
+          </>
+        )
+      },
     },
     {
       key: 'link',
@@ -303,11 +305,11 @@ export function EventsPage() {
               }}
             >
               <option value="">All types</option>
-              <option value="click">click</option>
-              <option value="install">install</option>
-              <option value="open">open</option>
-              <option value="conversion">conversion</option>
-              <option value="preview">preview</option>
+              {EVENT_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {eventTypeText(t)}
+                </option>
+              ))}
             </Select>
           </div>
           <div style={{ width: 200 }}>

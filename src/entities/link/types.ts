@@ -129,7 +129,8 @@ export type EventTypeKey =
   | "install"
   | "open"
   | "conversion"
-  | "preview";
+  | "preview"
+  | "dead_click";
 
 export type EventTypeCounts = Partial<Record<EventTypeKey, number>>;
 
@@ -147,6 +148,10 @@ export interface LinkStatsResponse {
   /** Link-preview fetches (messenger thumbnails) — not clicks, counted in
    * nothing click-based. Read alongside clicks: "40 previews, 12 clicks". */
   previews: number;
+  /** Clicks after the link stopped resolving (switched off or past
+   * expires_at) — not clicks, counted in nothing click-based. Same window as
+   * the rest. Absent from backends that predate it (SRE-0115). */
+  dead_clicks?: number;
   by_type: EventTypeCounts;
   by_utm?: Record<string, EventTypeCounts>;
 }
