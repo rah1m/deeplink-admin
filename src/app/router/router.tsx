@@ -74,7 +74,7 @@ const linksRoute = new Route({
 
 const linkDetailRoute = new Route({
   getParentRoute: () => protectedRoute,
-  path: '/links/$shortCode',
+  path: '/links/$id',
   component: LinkDetailPage,
 })
 

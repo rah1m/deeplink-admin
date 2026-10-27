@@ -16,75 +16,67 @@ export function useLinks(params: ListLinksParams) {
   })
 }
 
-export function useLinkPublic(shortCode: string | undefined) {
+export function useLinkAdmin(id: number | undefined) {
   return useQuery({
-    queryKey: shortCode ? linkQueryKeys.detail(shortCode) : ['links', 'detail', 'none'],
-    queryFn: () => linkApi.getPublic(shortCode!),
-    enabled: !!shortCode,
-  })
-}
-
-export function useLinkAdmin(shortCode: string | undefined) {
-  return useQuery({
-    queryKey: shortCode ? linkQueryKeys.admin(shortCode) : ['links', 'admin', 'none'],
-    queryFn: () => linkApi.getAdmin(shortCode!),
-    enabled: !!shortCode,
+    queryKey: id ? linkQueryKeys.admin(id) : ['links', 'admin', 'none'],
+    queryFn: () => linkApi.getAdmin(id!),
+    enabled: !!id,
   })
 }
 
 export function useLinkStats(
-  shortCode: string | undefined,
+  id: number | undefined,
   groupBy?: GroupBy,
   days?: number,
 ) {
   return useQuery({
-    queryKey: shortCode
-      ? linkQueryKeys.stats(shortCode, groupBy, days)
+    queryKey: id
+      ? linkQueryKeys.stats(id, groupBy, days)
       : ['links', 'stats', 'none'],
-    queryFn: () => linkApi.stats(shortCode!, groupBy, days),
-    enabled: !!shortCode,
+    queryFn: () => linkApi.stats(id!, groupBy, days),
+    enabled: !!id,
     placeholderData: keepPreviousData,
   })
 }
 
 export function useLinkTimeseries(
-  shortCode: string | undefined,
+  id: number | undefined,
   params: TimeseriesParams = {},
 ) {
   return useQuery({
-    queryKey: shortCode
-      ? linkQueryKeys.timeseries(shortCode, params)
+    queryKey: id
+      ? linkQueryKeys.timeseries(id, params)
       : ['links', 'timeseries', 'none'],
-    queryFn: () => linkApi.timeseries(shortCode!, params),
-    enabled: !!shortCode,
+    queryFn: () => linkApi.timeseries(id!, params),
+    enabled: !!id,
     placeholderData: keepPreviousData,
   })
 }
 
 export function useLinkRevenue(
-  shortCode: string | undefined,
+  id: number | undefined,
   params: RevenueParams = {},
 ) {
   return useQuery({
-    queryKey: shortCode
-      ? linkQueryKeys.revenue(shortCode, params)
+    queryKey: id
+      ? linkQueryKeys.revenue(id, params)
       : ['links', 'revenue', 'none'],
-    queryFn: () => linkApi.revenue(shortCode!, params),
-    enabled: !!shortCode,
+    queryFn: () => linkApi.revenue(id!, params),
+    enabled: !!id,
     placeholderData: keepPreviousData,
   })
 }
 
 export function useLinkFunnel(
-  shortCode: string | undefined,
+  id: number | undefined,
   params: FunnelParams = {},
 ) {
   return useQuery({
-    queryKey: shortCode
-      ? linkQueryKeys.funnel(shortCode, params)
+    queryKey: id
+      ? linkQueryKeys.funnel(id, params)
       : ['links', 'funnel', 'none'],
-    queryFn: () => linkApi.funnel(shortCode!, params),
-    enabled: !!shortCode,
+    queryFn: () => linkApi.funnel(id!, params),
+    enabled: !!id,
     placeholderData: keepPreviousData,
   })
 }

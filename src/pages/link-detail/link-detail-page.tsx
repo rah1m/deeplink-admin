@@ -23,6 +23,8 @@ import {
   withHiddenKeys,
   SOCIAL_META_FORM_KEYS,
   UTM_FORM_KEYS,
+  linkErrorText,
+  parseLinkId,
   useLinkAdmin,
   useLinkFunnel,
   useLinkRevenue,
@@ -43,7 +45,7 @@ import {
   formatDuration,
   formatNumber,
 } from "@shared/lib";
-import { extractError } from "@shared/api";
+import { extractError, extractErrorStatus } from "@shared/api";
 import { TimeseriesChart } from "@pages/analytics/charts";
 import "./link-detail.css";
 
@@ -69,12 +71,20 @@ function formatRevenue(value: number, currency: string) {
   }
 }
 
+/** A failed call on this link, with 400 (bad id) / 403 / 404 spelled out. */
+function linkError(err: unknown) {
+  return linkErrorText(extractErrorStatus(err), extractError(err));
+}
+
 export function LinkDetailPage() {
-  const { shortCode } = useParams({ strict: false }) as { shortCode: string };
+  const params = useParams({ strict: false }) as { id?: string };
+  // The route names the link by id; 0 (never sent) when it isn't one.
+  const id = parseLinkId(params.id) ?? 0;
+  const linkId = id || undefined;
   const navigate = useNavigate();
   const toast = useToast();
 
-  const link = useLinkAdmin(shortCode);
+  const link = useLinkAdmin(linkId);
   const [groupBy, setGroupBy] = useState<GroupBy | "">("");
   const [bucket, setBucket] = useState<TimeseriesBucketSize>("day");
   // One page-level window, sent explicitly to every period-aware endpoint —
@@ -85,27 +95,35 @@ export function LinkDetailPage() {
   // Read once: render must stay pure, and the cutoff is a fixed past date.
   const [now] = useState(() => Date.now());
   const [currency, setCurrency] = useState<string>("AZN");
-  const timeseries = useLinkTimeseries(shortCode, { bucket, days });
-  const stats = useLinkStats(shortCode, groupBy || undefined, days);
-  const revenue = useLinkRevenue(shortCode, { currency, days });
-  const funnel = useLinkFunnel(shortCode, { currency, days: funnelDays });
+  const timeseries = useLinkTimeseries(linkId, { bucket, days });
+  const stats = useLinkStats(linkId, groupBy || undefined, days);
+  const revenue = useLinkRevenue(linkId, { currency, days });
+  const funnel = useLinkFunnel(linkId, { currency, days: funnelDays });
 
-  const update = useUpdateLink(shortCode);
-  const clone = useCloneLink(shortCode);
-  const remove = useDeleteLink(shortCode);
+  const update = useUpdateLink(id);
+  const clone = useCloneLink(id);
+  const remove = useDeleteLink(id);
   const [editOpen, setEditOpen] = useState(false);
   const [desktopModeErr, setDesktopModeErr] = useState<string>();
   const [cloneOpen, setCloneOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
+  if (!id) return <LinkUnavailable message="Invalid link id" />;
   if (link.isLoading) return <CenteredSpinner />;
   if (link.isError || !link.data) {
-    return <div>Link not found.</div>;
+    return (
+      <LinkUnavailable
+        message={link.isError ? linkError(link.error) : "Link not found."}
+      />
+    );
   }
 
   const data = link.data;
+  // Shown and copied as before; only the API calls address it by id.
+  const shortCode = data.short_code;
+  const appId = data.app?.id ?? data.app_id;
   const shortUrl = linkApi.shortUrl(shortCode, data.app?.domain);
-  const qrUrl = linkApi.qrUrl(shortCode, 320, data.app?.domain);
+  const qrUrl = linkApi.qrUrl(shortCode, appId, 320, data.app?.domain);
 
   const expired =
     data.expires_at != null && new Date(data.expires_at) < new Date();
@@ -168,7 +186,7 @@ export function LinkDetailPage() {
           toast.success(next ? "Link activated" : "Link deactivated");
           link.refetch();
         },
-        onError: (err) => toast.error(extractError(err)),
+        onError: (err) => toast.error(linkError(err)),
       },
     );
   };
@@ -181,7 +199,7 @@ export function LinkDetailPage() {
           toast.success(`Cloned as ${res.short_code}`);
           setCloneOpen(false);
         },
-        onError: (err) => toast.error(extractError(err)),
+        onError: (err) => toast.error(linkError(err)),
       },
     );
   };
@@ -193,7 +211,7 @@ export function LinkDetailPage() {
         setDeleteOpen(false);
         navigate({ to: "/links" });
       },
-      onError: (err) => toast.error(extractError(err)),
+      onError: (err) => toast.error(linkError(err)),
     });
   };
 
@@ -478,7 +496,7 @@ export function LinkDetailPage() {
                   <option value="week">week</option>
                 </Select>
                 <ExportButtons
-                  url={`/v1/admin/links/${shortCode}/timeseries`}
+                  url={`/v1/admin/links/${id}/timeseries`}
                   params={{ bucket, days }}
                   kind={`timeseries-${shortCode}`}
                 />
@@ -921,7 +939,7 @@ export function LinkDetailPage() {
                 onError: (err) => {
                   const msg = extractError(err);
                   if (isDesktopModeError(msg)) setDesktopModeErr(msg);
-                  else toast.error(msg);
+                  else toast.error(linkError(err));
                 },
               },
             )
@@ -949,6 +967,21 @@ export function LinkDetailPage() {
         onCancel={() => setDeleteOpen(false)}
         onConfirm={onConfirmDelete}
       />
+    </>
+  );
+}
+
+function LinkUnavailable({ message }: { message: string }) {
+  return (
+    <>
+      <PageHeader
+        title={
+          <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>
+            <Link to="/links">Links</Link>
+          </span>
+        }
+      />
+      <div>{message}</div>
     </>
   );
 }

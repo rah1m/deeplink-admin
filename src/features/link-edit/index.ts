@@ -1,20 +1,20 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { linkApi, linkQueryKeys, type UpdateLinkInput } from '@entities/link'
 
-export function useUpdateLink(shortCode: string) {
+export function useUpdateLink(id: number) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (body: UpdateLinkInput) => linkApi.update(shortCode, body),
+    mutationFn: (body: UpdateLinkInput) => linkApi.update(id, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: linkQueryKeys.all() })
     },
   })
 }
 
-export function useDeleteLink(shortCode: string) {
+export function useDeleteLink(id: number) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: () => linkApi.remove(shortCode),
+    mutationFn: () => linkApi.remove(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: linkQueryKeys.all() })
     },

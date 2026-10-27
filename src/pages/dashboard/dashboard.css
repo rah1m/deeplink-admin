@@ -51,6 +51,14 @@
   font-size: 13px;
 }
 
+/* The brand beside a short code: two apps may hold the same code. */
+.dash__list-app,
+.dash__bar-app {
+  color: var(--color-text-subtle);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
 .dash__list-stat {
   font-size: 11px;
   color: var(--color-text-subtle);
@@ -175,7 +183,7 @@
 
 .dash__bar-row {
   display: grid;
-  grid-template-columns: 100px 1fr 60px;
+  grid-template-columns: 150px 1fr 60px;
   align-items: center;
   gap: 12px;
   font-size: 12px;

@@ -44,7 +44,7 @@ export function AnalyticsPage() {
   const [days, setDays] = useState<number>(30)
   const [currency, setCurrency] = useState('AZN')
   const [bucket, setBucket] = useState<TimeseriesBucketSize>('day')
-  const [pickedShortCode, setLinkShortCode] = useState<string>('')
+  const [pickedLinkId, setLinkId] = useState<number | null>(null)
 
   // Until the user picks one, the first app is selected.
   const appId = pickedAppId ?? apps.data?.[0]?.id ?? null
@@ -67,11 +67,11 @@ export function AnalyticsPage() {
   }, [topLinks.data])
 
   // The picked link while it is still in the top list, else the top link.
-  const linkShortCode = sortedLinks.some((l) => l.short_code === pickedShortCode)
-    ? pickedShortCode
-    : (sortedLinks[0]?.short_code ?? '')
+  const linkId = sortedLinks.some((l) => l.id === pickedLinkId)
+    ? pickedLinkId
+    : (sortedLinks[0]?.id ?? null)
 
-  const timeseries = useLinkTimeseries(linkShortCode || undefined, { bucket, days })
+  const timeseries = useLinkTimeseries(linkId ?? undefined, { bucket, days })
 
   if (apps.isLoading) return <CenteredSpinner />
 
@@ -234,13 +234,13 @@ export function AnalyticsPage() {
         actions={
           <div style={{ display: 'flex', gap: 8 }}>
             <Select
-              value={linkShortCode}
-              onChange={(e) => setLinkShortCode(e.target.value)}
+              value={linkId ?? ''}
+              onChange={(e) => setLinkId(e.target.value ? Number(e.target.value) : null)}
               style={{ width: 180 }}
             >
               <option value="">Select a link…</option>
               {sortedLinks.map((l) => (
-                <option key={l.id} value={l.short_code}>
+                <option key={l.id} value={l.id}>
                   {l.name ? `${l.name} (${l.short_code})` : l.short_code}
                 </option>
               ))}
@@ -259,7 +259,7 @@ export function AnalyticsPage() {
           </div>
         }
       >
-        {!linkShortCode ? (
+        {!linkId ? (
           <div className="an__empty">Pick a link to chart its trend.</div>
         ) : timeseries.isLoading ? (
           <div style={{ padding: 24 }}>

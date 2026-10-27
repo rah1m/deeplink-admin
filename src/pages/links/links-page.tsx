@@ -20,10 +20,11 @@ import {
   type DynamicLink,
   type LinkSourceFilter,
   linkApi,
+  SHORT_CODE_TAKEN,
 } from "@entities/link";
 import { isDesktopModeError, useAllowedApps } from "@entities/app";
 import { formatDate, formatNumber, copyToClipboard, cn } from "@shared/lib";
-import { extractError } from "@shared/api";
+import { extractError, extractErrorStatus } from "@shared/api";
 import "./links.css";
 
 const PAGE_SIZE = 20;
@@ -101,7 +102,7 @@ export function LinksPage() {
       header: "Short code",
       width: "160px",
       render: (l) => (
-        <Link to="/links/$shortCode" params={{ shortCode: l.short_code }}>
+        <Link to="/links/$id" params={{ id: String(l.id) }}>
           <code>{l.short_code}</code>
         </Link>
       ),
@@ -273,8 +274,8 @@ export function LinksPage() {
         empty="No links yet"
         onRowClick={(l) =>
           navigate({
-            to: "/links/$shortCode",
-            params: { shortCode: l.short_code },
+            to: "/links/$id",
+            params: { id: String(l.id) },
           })
         }
       />
@@ -310,6 +311,8 @@ export function LinksPage() {
                 // A desktop_mode 400 goes on the field; anything else stays a toast.
                 const msg = extractError(err);
                 if (isDesktopModeError(msg)) setDesktopModeErr(msg);
+                else if (extractErrorStatus(err) === 409)
+                  toast.error(SHORT_CODE_TAKEN);
                 else toast.error(msg);
               },
             });

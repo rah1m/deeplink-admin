@@ -34,3 +34,8 @@ export function extractErrorCode(err: unknown): string | null {
   }
   return null
 }
+
+export function extractErrorStatus(err: unknown): number | null {
+  if (axios.isAxiosError(err)) return err.response?.status ?? null
+  return null
+}

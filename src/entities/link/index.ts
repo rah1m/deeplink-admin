@@ -31,9 +31,9 @@ export type {
   FunnelResponse,
 } from './types'
 export { linkApi, linkQueryKeys } from './api'
+export { parseLinkId, linkErrorText, SHORT_CODE_TAKEN } from './link-id'
 export {
   useLinks,
-  useLinkPublic,
   useLinkAdmin,
   useLinkStats,
   useLinkTimeseries,

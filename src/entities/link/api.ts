@@ -11,7 +11,6 @@ import type {
   LinkStatsResponse,
   ListLinksParams,
   ListLinksResponse,
-  PublicLinkInfo,
   RevenueBreakdown,
   RevenueParams,
   TimeseriesParams,
@@ -34,42 +33,52 @@ export const linkApi = {
       .then((r) => r.data),
   create: (body: CreateLinkInput) =>
     http.post<CreateLinkResponse>('/v1/admin/links', body).then((r) => r.data),
-  clone: (shortCode: string, body: CloneLinkInput = {}) =>
+  // Every admin route for one link takes its numeric id, not the short code:
+  // a code is unique per app only (SRE-0118), so it may name several links.
+  clone: (id: number, body: CloneLinkInput = {}) =>
     http
-      .post<CreateLinkResponse>(`/v1/admin/links/${shortCode}/clone`, body)
+      .post<CreateLinkResponse>(`/v1/admin/links/${id}/clone`, body)
       .then((r) => r.data),
-  getAdmin: (shortCode: string) =>
-    http.get<DynamicLink>(`/v1/admin/links/${shortCode}`).then((r) => r.data),
-  getPublic: (shortCode: string) =>
-    http.get<PublicLinkInfo>(`/v1/links/${shortCode}`).then((r) => r.data),
-  update: (shortCode: string, body: UpdateLinkInput) =>
+  getAdmin: (id: number) =>
+    http.get<DynamicLink>(`/v1/admin/links/${id}`).then((r) => r.data),
+  update: (id: number, body: UpdateLinkInput) =>
     http
-      .patch<DynamicLink>(`/v1/admin/links/${shortCode}`, body)
+      .patch<DynamicLink>(`/v1/admin/links/${id}`, body)
       .then((r) => r.data),
-  remove: (shortCode: string) =>
-    http.delete<void>(`/v1/admin/links/${shortCode}`).then((r) => r.data),
-  stats: (shortCode: string, groupBy?: GroupBy, days?: number) =>
+  remove: (id: number) =>
+    http.delete<void>(`/v1/admin/links/${id}`).then((r) => r.data),
+  stats: (id: number, groupBy?: GroupBy, days?: number) =>
     http
-      .get<LinkStatsResponse>(`/v1/admin/links/${shortCode}/stats`, {
+      .get<LinkStatsResponse>(`/v1/admin/links/${id}/stats`, {
         params: { group_by: groupBy, days },
       })
       .then((r) => r.data),
-  timeseries: (shortCode: string, params: TimeseriesParams = {}) =>
+  timeseries: (id: number, params: TimeseriesParams = {}) =>
     http
-      .get<TimeseriesResponse>(`/v1/admin/links/${shortCode}/timeseries`, {
+      .get<TimeseriesResponse>(`/v1/admin/links/${id}/timeseries`, {
         params,
       })
       .then((r) => r.data),
-  revenue: (shortCode: string, params: RevenueParams = {}) =>
+  revenue: (id: number, params: RevenueParams = {}) =>
     http
-      .get<RevenueBreakdown>(`/v1/admin/links/${shortCode}/revenue`, { params })
+      .get<RevenueBreakdown>(`/v1/admin/links/${id}/revenue`, { params })
       .then((r) => r.data),
-  funnel: (shortCode: string, params: FunnelParams = {}) =>
+  funnel: (id: number, params: FunnelParams = {}) =>
     http
-      .get<FunnelResponse>(`/v1/admin/links/${shortCode}/funnel`, { params })
+      .get<FunnelResponse>(`/v1/admin/links/${id}/funnel`, { params })
       .then((r) => r.data),
-  qrUrl: (shortCode: string, size = 256, domain?: string | null) =>
-    `${linkOrigin(domain)}/v1/links/${shortCode}/qr?size=${size}`,
+  // Public, so it stays on the code; app_id says whose code it is once two
+  // apps share one (without it the backend answers 400).
+  qrUrl: (
+    shortCode: string,
+    appId: number | null | undefined,
+    size = 256,
+    domain?: string | null,
+  ) => {
+    const qs = new URLSearchParams({ size: String(size) })
+    if (appId != null) qs.set('app_id', String(appId))
+    return `${linkOrigin(domain)}/v1/links/${encodeURIComponent(shortCode)}/qr?${qs}`
+  },
   shortUrl: (shortCode: string, domain?: string | null) =>
     `${linkOrigin(domain)}/${shortCode}`,
 }
@@ -77,14 +86,13 @@ export const linkApi = {
 export const linkQueryKeys = {
   all: () => ['links'] as const,
   list: (params: ListLinksParams) => ['links', 'list', params] as const,
-  detail: (shortCode: string) => ['links', 'detail', shortCode] as const,
-  admin: (shortCode: string) => ['links', 'admin', shortCode] as const,
-  stats: (shortCode: string, groupBy?: GroupBy, days?: number) =>
-    ['links', 'stats', shortCode, groupBy ?? 'all', days ?? null] as const,
-  timeseries: (shortCode: string, params: TimeseriesParams) =>
-    ['links', 'timeseries', shortCode, params] as const,
-  revenue: (shortCode: string, params: RevenueParams) =>
-    ['links', 'revenue', shortCode, params] as const,
-  funnel: (shortCode: string, params: FunnelParams) =>
-    ['links', 'funnel', shortCode, params] as const,
+  admin: (id: number) => ['links', 'admin', id] as const,
+  stats: (id: number, groupBy?: GroupBy, days?: number) =>
+    ['links', 'stats', id, groupBy ?? 'all', days ?? null] as const,
+  timeseries: (id: number, params: TimeseriesParams) =>
+    ['links', 'timeseries', id, params] as const,
+  revenue: (id: number, params: RevenueParams) =>
+    ['links', 'revenue', id, params] as const,
+  funnel: (id: number, params: FunnelParams) =>
+    ['links', 'funnel', id, params] as const,
 }

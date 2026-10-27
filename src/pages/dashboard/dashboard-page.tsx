@@ -105,9 +105,13 @@ export function DashboardPage() {
             <ul className="dash__list">
               {links.data?.items.map((l) => (
                 <li key={l.id}>
-                  <Link to="/links/$shortCode" params={{ shortCode: l.short_code }}>
+                  <Link to="/links/$id" params={{ id: String(l.id) }}>
                     <code>{l.short_code}</code>
                   </Link>
+                  {/* The list mixes brands, and two may share a code. */}
+                  {l.app?.name && (
+                    <span className="dash__list-app">{l.app.name}</span>
+                  )}
                   <span
                     className={cn('dash__list-meta', l.name && 'dash__list-name')}
                     title={l.deep_link}

@@ -347,6 +347,7 @@ export function TopLinksBar({ links, limit = 6 }: TopLinksBarProps) {
       .map((l) => ({
         id: l.id,
         short_code: l.short_code,
+        app_name: l.app?.name,
         name: l.name,
         clicks: l.stats?.clicks ?? 0,
       }))
@@ -367,12 +368,16 @@ export function TopLinksBar({ links, limit = 6 }: TopLinksBarProps) {
         return (
           <li key={r.id} className="dash__bar-row">
             <Link
-              to="/links/$shortCode"
-              params={{ shortCode: r.short_code }}
+              to="/links/$id"
+              params={{ id: String(r.id) }}
               className="dash__bar-label"
               title={r.name || undefined}
             >
               {r.short_code}
+              {/* Mixes brands, and two may share a code. */}
+              {r.app_name && (
+                <span className="dash__bar-app"> · {r.app_name}</span>
+              )}
             </Link>
             <div className="dash__bar-track">
               <div
